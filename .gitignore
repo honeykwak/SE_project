@@ -38,4 +38,4 @@ client/build
 *.pdf
 DESIGN_GUIDE.md
 mockup.css
-styles/
+/styles/
