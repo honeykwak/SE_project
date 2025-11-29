@@ -12,7 +12,7 @@ import pageRoutes from './routes/pageRoutes';
 import inquiryRoutes from './routes/inquiryRoutes';
 
 // Force load env vars from server root
-const envPath = path.resolve(__dirname, '../.env'); // dist/../.env -> server/.env
+const envPath = path.resolve(__dirname, '../.env');
 console.log(`[server]: Loading .env from ${envPath}`);
 const result = dotenv.config({ path: envPath });
 if (result.error) {
@@ -27,6 +27,14 @@ const port = process.env.PORT || 8000;
 
 // Middleware
 app.use(express.json());
+
+// Logging Middleware for debugging CORS
+app.use((req, res, next) => {
+  console.log(`[Request] ${req.method} ${req.path} | Origin: ${req.headers.origin}`);
+  next();
+});
+
+// CORS Config
 app.use(cors({
   origin: [
     'http://localhost:5173',
@@ -36,7 +44,12 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(helmet());
+
+// Helmet Config (Allow Cross-Origin Resource Sharing)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
 app.use(morgan('dev'));
 
 // Routes
@@ -53,4 +66,3 @@ app.get('/', (req: Request, res: Response) => {
 app.listen(port, () => {
   console.log(`[server]: Server is running at http://localhost:${port}`);
 });
-
