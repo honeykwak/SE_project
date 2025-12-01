@@ -5,8 +5,8 @@ import type { Project } from '../../types/project';
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  background: white;
-  border-radius: 16px;
+  background: ${({ theme }) => theme.colors.neutral.white};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
   border: 1px solid ${({ theme }) => theme.colors.neutral.border};
   overflow: hidden;
 `;
@@ -15,34 +15,34 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
   border-bottom: 1px solid ${({ theme }) => theme.colors.neutral.border};
   flex-wrap: wrap;
-  gap: 12px;
+  gap: ${({ theme }) => theme.spacing.md};
 `;
 
 const TitleGroup = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: ${({ theme }) => theme.spacing.md};
 `;
 
 const MonthTitle = styled.h2`
-  font-size: 18px;
-  font-weight: 700;
+  font-size: ${({ theme }) => theme.typography.headings.h3.size};
+  font-weight: ${({ theme }) => theme.typography.headings.h3.weight};
   color: ${({ theme }) => theme.colors.neutral.black};
   min-width: 120px;
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
-  gap: 4px;
+  gap: ${({ theme }) => theme.spacing.xs};
 `;
 
 const NavButton = styled.button`
   background: none;
   border: 1px solid ${({ theme }) => theme.colors.neutral.border};
-  border-radius: 8px;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
   padding: 6px 12px;
   cursor: pointer;
   font-size: 14px;
@@ -58,9 +58,9 @@ const NavButton = styled.button`
 const ToggleContainer = styled.div`
   display: flex;
   background-color: ${({ theme }) => theme.colors.neutral.background};
-  padding: 4px;
-  border-radius: 8px;
-  gap: 4px;
+  padding: ${({ theme }) => theme.spacing.xs};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  gap: ${({ theme }) => theme.spacing.xs};
 `;
 
 const ToggleButton = styled.button<{ $isActive: boolean }>`
@@ -70,7 +70,7 @@ const ToggleButton = styled.button<{ $isActive: boolean }>`
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  background-color: ${({ $isActive }) => ($isActive ? 'white' : 'transparent')};
+  background-color: ${({ $isActive, theme }) => ($isActive ? theme.colors.neutral.white : 'transparent')};
   color: ${({ $isActive, theme }) => ($isActive ? theme.colors.primary.main : theme.colors.neutral.gray600)};
   box-shadow: ${({ $isActive }) => ($isActive ? '0 1px 3px rgba(0,0,0,0.1)' : 'none')};
   transition: all 0.2s;
@@ -88,21 +88,21 @@ const CalendarGrid = styled.div`
 `;
 
 const DayHeader = styled.div`
-  padding: 12px;
+  padding: ${({ theme }) => theme.spacing.md} 12px;
   text-align: center;
   font-weight: 600;
   font-size: 14px;
   color: ${({ theme }) => theme.colors.neutral.gray600};
   border-bottom: 1px solid ${({ theme }) => theme.colors.neutral.border};
-  background-color: #fafafa;
+  background-color: ${({ theme }) => theme.colors.neutral.background};
 `;
 
 const DateCell = styled.div<{ $isCurrentMonth: boolean; $isToday: boolean }>`
   min-height: 100px;
-  padding: 8px;
+  padding: ${({ theme }) => theme.spacing.sm};
   border-bottom: 1px solid ${({ theme }) => theme.colors.neutral.border};
   border-right: 1px solid ${({ theme }) => theme.colors.neutral.border};
-  background-color: ${({ $isCurrentMonth }) => ($isCurrentMonth ? 'white' : '#fcfcfc')};
+  background-color: ${({ $isCurrentMonth, theme }) => ($isCurrentMonth ? theme.colors.neutral.white : theme.colors.neutral.background)};
   
   &:nth-child(7n) {
     border-right: none;
@@ -110,7 +110,7 @@ const DateCell = styled.div<{ $isCurrentMonth: boolean; $isToday: boolean }>`
 
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: ${({ theme }) => theme.spacing.xs};
 `;
 
 const DateNumber = styled.div<{ $isToday: boolean }>`
@@ -130,7 +130,7 @@ const DateNumber = styled.div<{ $isToday: boolean }>`
 // --- Timeline (Gantt) Styles ---
 const TimelineScrollArea = styled.div`
   overflow-x: auto;
-  padding: 20px;
+  padding: ${({ theme }) => theme.spacing.lg};
 `;
 
 const TimelineGrid = styled.div<{ $days: number }>`
@@ -145,7 +145,7 @@ const TimelineHeaderCell = styled.div<{ $isToday: boolean }>`
   font-size: 12px;
   color: ${({ $isToday, theme }) => ($isToday ? theme.colors.primary.main : theme.colors.neutral.gray600)};
   font-weight: ${({ $isToday }) => ($isToday ? 'bold' : 'normal')};
-  padding-bottom: 8px;
+  padding-bottom: ${({ theme }) => theme.spacing.sm};
   position: relative;
 
   &::after {
@@ -165,7 +165,7 @@ const TimelineHeaderCell = styled.div<{ $isToday: boolean }>`
 const TimelineRow = styled.div<{ $days: number }>`
   position: relative;
   height: 44px;
-  margin-bottom: 8px;
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
   width: ${({ $days }) => $days * 40}px;
 `;
 
@@ -173,7 +173,7 @@ const TimelineRow = styled.div<{ $days: number }>`
 const ProjectChip = styled.div<{ $status: string; $viewMode: 'calendar' | 'timeline'; $width?: number; $offset?: number }>`
   font-size: 11px;
   padding: 4px 8px;
-  border-radius: 4px;
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
   background-color: ${({ theme, $status }) =>
     $status === 'completed'
       ? theme.colors.status.success + '20'
