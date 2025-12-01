@@ -5,6 +5,7 @@ import Button from '../components/common/Button';
 import Timeline from '../components/dashboard/Timeline';
 import ProjectModal from '../components/dashboard/ProjectModal';
 import PortfolioModal from '../components/dashboard/PortfolioModal';
+import ShareModal from '../components/dashboard/ShareModal';
 import { getProjects, createProject, updateProject, deleteProject } from '../api/project';
 import { getPortfolioItems, createPortfolioItem, updatePortfolioItem, deletePortfolioItem } from '../api/portfolio';
 import type { Project, CreateProjectData } from '../types/project';
@@ -72,11 +73,13 @@ const DashboardPage = () => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editingPortfolio, setEditingPortfolio] = useState<PortfolioItem | null>(null);
   
   const [isLoading, setIsLoading] = useState(false);
+  const [username, setUsername] = useState('');
 
   // 프로젝트 및 포트폴리오 목록 불러오기
   const fetchData = async () => {
@@ -94,6 +97,15 @@ const DashboardPage = () => {
 
   useEffect(() => {
     fetchData();
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setUsername(user.username);
+      } catch (e) {
+        console.error('Failed to parse user info', e);
+      }
+    }
   }, []);
 
   // --- Project Handlers ---
@@ -187,6 +199,9 @@ const DashboardPage = () => {
         <Header>
           <Title>내 프로젝트 관리</Title>
           <div style={{ display: 'flex', gap: '8px' }}>
+            <Button variant="outline" onClick={() => setIsShareModalOpen(true)}>
+                🔗 내 페이지 공유
+            </Button>
             <Button onClick={handleOpenCreateModal}>+ 프로젝트 생성</Button>
             <Button variant="outline" onClick={handleOpenCreatePortfolioModal}>+ 포트폴리오 추가</Button>
           </div>
@@ -253,9 +268,14 @@ const DashboardPage = () => {
         initialData={editingPortfolio}
         isLoading={isLoading}
       />
+
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        username={username}
+      />
     </Container>
   );
 };
 
 export default DashboardPage;
-
