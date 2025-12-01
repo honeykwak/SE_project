@@ -1,9 +1,14 @@
 import styled from 'styled-components';
 import { useForm } from 'react-hook-form';
+import { DateRange, RangeKeyDict } from 'react-date-range';
+import 'react-date-range/dist/styles.css'; // main css file
+import 'react-date-range/dist/theme/default.css'; // theme css file
+import { ko } from 'date-fns/locale'; // 한국어 로케일
+
 import Button from '../common/Button';
 import Input from '../common/Input';
 import type { CreateProjectData, Project } from '../../types/project';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 const Overlay = styled.div`
   position: fixed;
@@ -19,32 +24,58 @@ const Overlay = styled.div`
 `;
 
 const ModalCard = styled.div`
-  background-color: white;
-  padding: 32px;
-  border-radius: 12px;
+  background-color: ${({ theme }) => theme.colors.neutral.white};
+  padding: ${({ theme }) => theme.spacing.xl};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
   width: 100%;
   max-width: 500px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: ${({ theme }) => theme.spacing.lg};
+  max-height: 90vh; // 화면보다 작게
+  overflow-y: auto; // 스크롤 허용
 `;
 
 const Title = styled.h2`
-  font-size: 20px;
-  font-weight: 700;
+  font-size: ${({ theme }) => theme.typography.headings.h3.size};
+  font-weight: ${({ theme }) => theme.typography.headings.h3.weight};
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: ${({ theme }) => theme.spacing.md};
+`;
+
+const Label = styled.label`
+  font-size: 14px;
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.neutral.black};
+  margin-bottom: 4px;
+  display: block;
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 16px;
+  gap: ${({ theme }) => theme.spacing.sm};
+  margin-top: ${({ theme }) => theme.spacing.md};
+`;
+
+const DateRangeContainer = styled.div`
+  border: 1px solid ${({ theme }) => theme.colors.neutral.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  
+  .rdrDateDisplayWrapper {
+    background-color: transparent;
+  }
+  .rdrMonthAndYearWrapper {
+     padding-top: 0;
+     height: 40px;
+  }
 `;
 
 interface ProjectModalProps {
@@ -57,25 +88,56 @@ interface ProjectModalProps {
 
 const ProjectModal = ({ isOpen, onClose, onSubmit, initialData, isLoading }: ProjectModalProps) => {
   const { register, handleSubmit, reset, setValue } = useForm<CreateProjectData>();
+  
+  const [dateRange, setDateRange] = useState([
+    {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: 'selection'
+    }
+  ]);
 
   useEffect(() => {
     if (initialData) {
       setValue('title', initialData.title);
-      // Date 객체거나 ISO string일 수 있음. YYYY-MM-DD 포맷으로 변환 필요
-      setValue('startDate', initialData.startDate.split('T')[0]);
-      setValue('endDate', initialData.endDate.split('T')[0]);
       setValue('status', initialData.status);
       setValue('description', initialData.description);
+      
+      // Date Range 초기화
+      setDateRange([{
+        startDate: new Date(initialData.startDate),
+        endDate: new Date(initialData.endDate),
+        key: 'selection'
+      }]);
     } else {
       reset({
         title: '',
-        startDate: '',
+        startDate: '', // form state는 나중에 채움
         endDate: '',
         status: 'active',
         description: '',
       });
+      setDateRange([{
+        startDate: new Date(),
+        endDate: new Date(),
+        key: 'selection'
+      }]);
     }
   }, [initialData, setValue, reset, isOpen]);
+
+  const handleFormSubmit = (data: CreateProjectData) => {
+    // DateRange 값을 Form Data에 병합
+    const payload = {
+      ...data,
+      startDate: dateRange[0].startDate.toISOString(), // 백엔드로 보낼 땐 ISO String
+      endDate: dateRange[0].endDate.toISOString(),
+    };
+    onSubmit(payload);
+  };
+
+  const handleDateChange = (item: RangeKeyDict) => {
+    setDateRange([item.selection as any]);
+  };
 
   if (!isOpen) return null;
 
@@ -83,34 +145,38 @@ const ProjectModal = ({ isOpen, onClose, onSubmit, initialData, isLoading }: Pro
     <Overlay onClick={onClose}>
       <ModalCard onClick={(e) => e.stopPropagation()}>
         <Title>{initialData ? '프로젝트 수정' : '새 프로젝트 추가'}</Title>
-        <Form onSubmit={handleSubmit(onSubmit)}>
+        <Form onSubmit={handleSubmit(handleFormSubmit)}>
           <Input
             label="프로젝트 제목"
             placeholder="제목을 입력하세요"
             {...register('title', { required: true })}
           />
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Input
-              label="시작 날짜"
-              type="date"
-              {...register('startDate', { required: true })}
-            />
-            <Input
-              label="종료 날짜"
-              type="date"
-              {...register('endDate', { required: true })}
-            />
+          
+          <div>
+            <Label>기간 설정</Label>
+            <DateRangeContainer>
+              <DateRange
+                editableDateInputs={true}
+                onChange={handleDateChange}
+                moveRangeOnFirstSelection={false}
+                ranges={dateRange}
+                locale={ko} // 한국어 적용
+                rangeColors={['#417DFF']} // 테마 Primary Color 적용
+                dateDisplayFormat="yyyy.MM.dd"
+              />
+            </DateRangeContainer>
           </div>
-          {/* 상태 선택은 간단히 select로 구현 */}
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-             <label style={{ fontSize: '14px', fontWeight: 500 }}>상태</label>
+             <Label>상태</Label>
              <select 
                 {...register('status')}
                 style={{ 
                     height: '48px', 
                     padding: '0 16px', 
                     borderRadius: '8px',
-                    border: '1px solid #E0E0E0' 
+                    border: '1px solid #E0E0E0',
+                    backgroundColor: 'white'
                 }}
              >
                  <option value="planning">기획중</option>
