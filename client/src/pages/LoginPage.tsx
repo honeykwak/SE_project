@@ -44,6 +44,9 @@ const LoginPage = () => {
       const response = await login(data as LoginCredentials);
       console.log('Login Success:', response);
       localStorage.setItem('token', response.token); // 토큰 저장
+      if (response.user) {
+        localStorage.setItem('user', JSON.stringify(response.user)); // 유저 정보 저장
+      }
       navigate('/dashboard'); 
       // alert(`로그인 성공! 환영합니다, ${response.name}님.`);
     } catch (error: any) {

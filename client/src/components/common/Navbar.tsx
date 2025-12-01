@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import Button from './Button';
 
 const NavContainer = styled.nav`
@@ -36,11 +37,24 @@ const UserName = styled.span`
 
 const Navbar = () => {
   const navigate = useNavigate();
-  // TODO: 실제 유저 정보는 Context나 전역 상태에서 가져와야 함
-  const userName = '이명건'; // 임시 데이터
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        // 서버에서 주는 user 객체 구조에 따라 user.name 또는 user.username 사용
+        setUserName(user.username || user.name || '사용자');
+      } catch (e) {
+        console.error('Failed to parse user info', e);
+      }
+    }
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     navigate('/login');
   };
 
@@ -59,4 +73,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-
