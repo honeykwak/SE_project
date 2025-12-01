@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { useForm } from 'react-hook-form';
-import { DateRange, RangeKeyDict } from 'react-date-range';
+import { DateRange } from 'react-date-range';
+import type { RangeKeyDict } from 'react-date-range'; // type-only import
 import 'react-date-range/dist/styles.css'; // main css file
 import 'react-date-range/dist/theme/default.css'; // theme css file
 import { ko } from 'date-fns/locale'; // 한국어 로케일
