@@ -46,6 +46,12 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         name: user.name,
         email: user.email,
         username: user.username,
+        role: user.role,
+        bio: user.bio,
+        tags: user.tags,
+        avatarUrl: user.avatarUrl,
+        location: user.location,
+        availability: user.availability,
         token,
       });
     } else {
@@ -88,6 +94,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       name: user.name,
       email: user.email,
       username: user.username,
+      role: user.role,
+      bio: user.bio,
+      tags: user.tags,
+      avatarUrl: user.avatarUrl,
+      location: user.location,
+      availability: user.availability,
       token,
     });
   } catch (error) {
@@ -110,6 +122,56 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
         name: user.name,
         email: user.email,
         username: user.username,
+        role: user.role,
+        bio: user.bio,
+        tags: user.tags,
+        avatarUrl: user.avatarUrl,
+        location: user.location,
+        availability: user.availability,
+      });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+export const updateProfile = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+      user.name = req.body.name || user.name;
+      user.role = req.body.role || user.role;
+      user.bio = req.body.bio || user.bio;
+      user.location = req.body.location || user.location;
+      user.availability = req.body.availability || user.availability;
+      user.avatarUrl = req.body.avatarUrl || user.avatarUrl;
+
+      // Handle tags array
+      if (req.body.tags) {
+        user.tags = req.body.tags;
+      }
+
+      const updatedUser = await user.save();
+
+      res.json({
+        _id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        username: updatedUser.username,
+        role: updatedUser.role,
+        bio: updatedUser.bio,
+        tags: updatedUser.tags,
+        avatarUrl: updatedUser.avatarUrl,
+        location: updatedUser.location,
+        availability: updatedUser.availability,
+        token: req.header('Authorization')?.split(' ')[1], // Return existing token just in case
       });
     } else {
       res.status(404).json({ message: 'User not found' });

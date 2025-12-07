@@ -9,6 +9,74 @@ interface LoginPageProps {
   onLogin: (user: UserProfile) => void;
 }
 
+// --- 3D RIPPLE ENGINE ---
+const RippleContainer: React.FC<{ children: React.ReactNode; perspective?: string; rotation?: string; className?: string }> = ({
+  children,
+  perspective = "1000px",
+  rotation = "rotateX(70deg)",
+  className = ""
+}) => (
+  <div className={`absolute ${className} w-[1000px] h-[800px] pointer-events-none z-0 flex items-center justify-center`}>
+    <div
+      className="relative w-full h-full"
+      style={{
+        transformStyle: 'preserve-3d',
+        perspective: perspective,
+        transform: rotation
+      }}
+    >
+      {children}
+    </div>
+  </div>
+);
+
+// Deep Resonance (Synced)
+const DeepRipple = () => (
+  <RippleContainer rotation="rotateX(75deg)" className="top-[125%] left-[80%] -translate-x-1/2 -translate-y-1/2">
+    {[...Array(3)].map((_, i) => (
+      <div
+        key={i}
+        className="absolute top-1/2 left-1/2 rounded-full border-blue-900/10 shadow-[0_10px_40px_rgba(30,58,138,0.2)]"
+        style={{
+          width: '1600px',
+          height: '1600px',
+          animation: `ripple-synced 4s ease-out infinite`,
+          animationDelay: `${i * 0.15}s`,
+          transform: 'translate(-50%, -50%) scale(0.1)',
+          borderColor: 'rgba(37, 99, 235, 0.4)'
+        }}
+      />
+    ))}
+  </RippleContainer>
+);
+
+const MotionBackground = () => (
+  <div className="absolute inset-0 overflow-hidden bg-stone-50 pointer-events-none z-0">
+    <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-blue-50/50 to-stone-50"></div>
+
+    {/* Floating Abstract Card */}
+    <div className="absolute top-[20%] right-[10%] w-72 h-48 bg-white rounded-2xl shadow-xl border border-blue-100 opacity-80 transform rotate-[-6deg] animate-[bounce_6s_infinite] hidden md:block z-10">
+      <div className="p-6 space-y-4">
+        <div className="h-3 w-1/3 bg-stone-200 rounded"></div>
+        <div className="h-3 w-full bg-stone-100 rounded"></div>
+        <div className="h-3 w-2/3 bg-stone-100 rounded"></div>
+      </div>
+    </div>
+
+    {/* Anchor Container */}
+    <div className="absolute bottom-[25%] right-[20%] w-64 h-72 hidden md:flex items-center justify-center z-20">
+      {/* Ripple */}
+      <div className="absolute inset-0 flex items-center justify-center z-0">
+        <DeepRipple />
+      </div>
+      {/* Card */}
+      <div className="relative w-full h-full bg-blue-600 rounded-2xl shadow-2xl shadow-blue-900/20 transform flex items-center justify-center z-20 animate-[impact-bounce_4s_infinite]">
+        <div className="text-white text-6xl font-bold opacity-20 select-none">Sync.</div>
+      </div>
+    </div>
+  </div>
+);
+
 export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('alex@syncup.com');
@@ -29,89 +97,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     }
   };
 
-  // --- 3D RIPPLE ENGINE ---
-  const RippleContainer: React.FC<{ children: React.ReactNode; perspective?: string; rotation?: string; className?: string }> = ({
-    children,
-    perspective = "1000px",
-    rotation = "rotateX(70deg)",
-    className = ""
-  }) => (
-    <div className={`absolute ${className} w-[1000px] h-[800px] pointer-events-none z-0 flex items-center justify-center`}>
-      <style>
-        {`
-                /* Synced Ripple for Deep Resonance */
-                @keyframes ripple-synced {
-                    0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; border-width: 0px; }
-                    49% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; border-width: 0px; }
-                    50% { transform: translate(-50%, -50%) scale(0.2); opacity: 0.6; border-width: 15px; } /* Impact Moment */
-                    100% { transform: translate(-50%, -50%) scale(3.5); opacity: 0; border-width: 0px; }
-                }
-                /* Card Impact Bounce - Fixed Rotation, Vertical Drop */
-                @keyframes impact-bounce {
-                    0%, 100% { transform: translateY(-80px) rotate(12deg); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
-                    50% { transform: translateY(60px) rotate(12deg); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); } /* Hits water at 50% */
-                }
-            `}
-      </style>
-      <div
-        className="relative w-full h-full"
-        style={{
-          transformStyle: 'preserve-3d',
-          perspective: perspective,
-          transform: rotation
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
 
-  // Deep Resonance (Synced)
-  const DeepRipple = () => (
-    <RippleContainer rotation="rotateX(75deg)" className="top-[125%] left-[80%] -translate-x-1/2 -translate-y-1/2">
-      {[...Array(3)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute top-1/2 left-1/2 rounded-full border-blue-900/10 shadow-[0_10px_40px_rgba(30,58,138,0.2)]"
-          style={{
-            width: '1600px',
-            height: '1600px',
-            animation: `ripple-synced 4s ease-out infinite`,
-            animationDelay: `${i * 0.15}s`,
-            transform: 'translate(-50%, -50%) scale(0.1)',
-            borderColor: 'rgba(37, 99, 235, 0.4)'
-          }}
-        />
-      ))}
-    </RippleContainer>
-  );
-
-  const MotionBackground = () => (
-    <div className="absolute inset-0 overflow-hidden bg-stone-50 pointer-events-none z-0">
-      <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-blue-50/50 to-stone-50"></div>
-
-      {/* Floating Abstract Card */}
-      <div className="absolute top-[20%] right-[10%] w-72 h-48 bg-white rounded-2xl shadow-xl border border-blue-100 opacity-80 transform rotate-[-6deg] animate-[bounce_6s_infinite] hidden md:block z-10">
-        <div className="p-6 space-y-4">
-          <div className="h-3 w-1/3 bg-stone-200 rounded"></div>
-          <div className="h-3 w-full bg-stone-100 rounded"></div>
-          <div className="h-3 w-2/3 bg-stone-100 rounded"></div>
-        </div>
-      </div>
-
-      {/* Anchor Container */}
-      <div className="absolute bottom-[25%] right-[20%] w-64 h-72 hidden md:flex items-center justify-center z-20">
-        {/* Ripple */}
-        <div className="absolute inset-0 flex items-center justify-center z-0">
-          <DeepRipple />
-        </div>
-        {/* Card */}
-        <div className="relative w-full h-full bg-blue-600 rounded-2xl shadow-2xl shadow-blue-900/20 transform flex items-center justify-center z-20 animate-[impact-bounce_4s_infinite]">
-          <div className="text-white text-6xl font-bold opacity-20 select-none">Sync.</div>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center md:justify-start relative font-sans text-stone-900 overflow-hidden p-6 md:p-0">

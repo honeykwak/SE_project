@@ -16,7 +16,7 @@ const envPath = path.resolve(__dirname, '../.env');
 console.log(`[server]: Loading .env from ${envPath}`);
 const result = dotenv.config({ path: envPath });
 if (result.error) {
-    console.log('[server]: Error loading .env:', result.error.message);
+  console.log('[server]: Error loading .env:', result.error.message);
 }
 
 // Connect to Database
@@ -38,6 +38,7 @@ app.use((req, res, next) => {
 app.use(cors({
   origin: [
     'http://localhost:5173',
+    'http://localhost:3000',
     'https://se-project-roan.vercel.app'
   ],
   credentials: true,

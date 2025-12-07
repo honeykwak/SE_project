@@ -5,6 +5,7 @@ import { Timeline } from '../components/Timeline';
 import { AIAssistant } from '../components/AIAssistant';
 import { generateReplyDraft } from '../services/geminiService';
 import dataService from '../services/dataService';
+import authService from '../services/authService';
 import {
     LayoutDashboard,
     Calendar as CalendarIcon,
@@ -90,14 +91,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
     // -- Share Modal State --
     const [showShareModal, setShowShareModal] = useState(false);
+    useEffect(() => {
+        if (showShareModal) setIsQrLoading(true);
+    }, [showShareModal]);
 
     // -- Profile Edit Modal State --
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [editName, setEditName] = useState(user.name);
-    const [editRole, setEditRole] = useState(user.role);
-    const [editBio, setEditBio] = useState(user.bio);
-    const [editTags, setEditTags] = useState(user.tags.join(', '));
-    const [editAvatar, setEditAvatar] = useState(user.avatarUrl);
+    const [editRole, setEditRole] = useState('');
+    const [editBio, setEditBio] = useState('');
+    const [editTags, setEditTags] = useState('');
+    const [editAvatar, setEditAvatar] = useState('');
+    const [editLocation, setEditLocation] = useState('');
+    const [editAvailability, setEditAvailability] = useState('');
 
     // -- Project Modal State --
     const [showProjectModal, setShowProjectModal] = useState(false);
@@ -108,6 +114,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const [projStart, setProjStart] = useState('');
     const [projEnd, setProjEnd] = useState('');
     const [projStatus, setProjStatus] = useState<'planning' | 'in-progress' | 'completed'>('planning');
+
+    // QR Loading State
+    const [isQrLoading, setIsQrLoading] = useState(true);
 
     // -- Project Filter State --
     const [filterStatus, setFilterStatus] = useState<'all' | 'planning' | 'in-progress' | 'completed'>('all');
@@ -159,21 +168,32 @@ export const Dashboard: React.FC<DashboardProps> = ({
         setEditBio(user.bio);
         setEditTags(user.tags.join(', '));
         setEditAvatar(user.avatarUrl);
+        setEditLocation(user.location || '');
+        setEditAvailability(user.availability || '');
         setShowSettingsMenu(false);
         setShowProfileModal(true);
     };
 
-    const handleSaveProfile = () => {
-        onUpdateUser({
-            ...user,
-            name: editName,
-            role: editRole,
-            bio: editBio,
-            avatarUrl: editAvatar,
-            tags: editTags.split(',').map(t => t.trim()).filter(t => t.length > 0)
-        });
-        setShowProfileModal(false);
-        showToast('프로필이 업데이트되었습니다');
+    const handleSaveProfile = async () => {
+        try {
+            const updatedData = {
+                name: editName,
+                role: editRole,
+                bio: editBio,
+                avatarUrl: editAvatar,
+                tags: editTags.split(',').map(t => t.trim()).filter(t => t.length > 0),
+                location: editLocation,
+                availability: editAvailability
+            };
+
+            const updatedUser = await authService.updateProfile(updatedData);
+            onUpdateUser(updatedUser);
+            setShowProfileModal(false);
+            showToast('프로필이 업데이트되었습니다 (저장됨)');
+        } catch (error) {
+            console.error(error);
+            showToast('프로필 업데이트 실패');
+        }
     };
 
     // --- Handlers ---
@@ -473,7 +493,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <div className="p-6 relative">
                     {/* Settings Popover */}
                     {showSettingsMenu && (
-                        <div className="settings-panel absolute bottom-full left-6 right-6 mb-2 bg-white rounded-2xl shadow-xl border border-stone-100 p-2 z-50 transition-all duration-200 opacity-100 translate-y-0">
+                        <div className="settings-panel absolute bottom-full left-6 right-6 mb-2 bg-white rounded-2xl shadow-xl border border-stone-100 p-2 z-50 animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200">
                             <button
                                 onClick={handleOpenProfileModal}
                                 className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-stone-50 rounded-xl text-stone-600 text-sm font-bold transition-colors"
@@ -544,7 +564,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                             {/* Notification Popover */}
                             {showNotifications && (
-                                <div className="notification-panel absolute top-full right-0 mt-2 w-80 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-stone-100 overflow-hidden z-50 transition-all duration-200 opacity-100 translate-y-0">
+                                <div className="notification-panel absolute top-full right-0 mt-2 w-80 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-stone-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 slide-in-from-top-2 duration-200">
                                     <div className="p-4 border-b border-stone-100 flex justify-between items-center bg-white/50">
                                         <h4 className="font-bold text-sm text-stone-900">알림</h4>
                                     </div>
@@ -596,10 +616,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                                 <LayoutDashboard size={24} />
                                             </div>
                                             <div>
-                                                <div className="text-stone-400 text-xs font-bold uppercase mb-0.5 tracking-wider">총 방문수</div>
+                                                <div className="text-stone-400 text-xs font-bold uppercase mb-0.5 tracking-wider">완료된 프로젝트</div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-3xl font-extrabold text-stone-900">1,240</span>
-                                                    <span className="text-green-600 text-[10px] font-bold bg-green-50 px-2 py-0.5 rounded-full">+12%</span>
+                                                    <span className="text-3xl font-extrabold text-stone-900">{projects.filter(p => p.status === 'completed').length}</span>
+                                                    <span className="text-blue-600 text-[10px] font-bold bg-blue-50 px-2 py-0.5 rounded-full">Accumulated</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -850,7 +870,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {showShareModal && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-md transition-opacity" onClick={() => setShowShareModal(false)}></div>
-                    <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm relative z-10 p-8 text-center animate-in fade-in zoom-in duration-300">
+                    <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm relative z-10 p-8 text-center animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-300">
                         <button onClick={() => setShowShareModal(false)} className="absolute top-4 right-4 p-2 bg-stone-50 rounded-full text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition-colors"><X size={20} /></button>
 
                         <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-600/20 transform rotate-3">
@@ -859,11 +879,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <h3 className="font-extrabold text-2xl mb-2 text-stone-900">페이지 공유</h3>
                         <p className="text-stone-500 text-sm mb-8 leading-relaxed px-4">이 QR 코드나 링크를 클라이언트에게 공유하여 포트폴리오와 일정을 보여주세요.</p>
 
-                        <div className="bg-white p-4 rounded-3xl border border-stone-100 shadow-inner inline-block mb-8">
+                        <div className="bg-white p-4 rounded-3xl border border-stone-100 shadow-inner inline-block mb-8 relative min-w-[200px] min-h-[200px] flex items-center justify-center">
+                            {isQrLoading && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-10">
+                                    <Loader2 size={32} className="animate-spin text-blue-600 mb-2" />
+                                    <span className="text-xs font-bold text-stone-400">생성 중...</span>
+                                </div>
+                            )}
                             <img
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin + '/#/alex-design')}`}
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.origin + '/#/' + user.username)}`}
                                 alt="QR Code"
-                                className="w-48 h-48 mix-blend-multiply"
+                                onLoad={() => setIsQrLoading(false)}
+                                className={`w-48 h-48 mix-blend-multiply transition-opacity duration-300 ${isQrLoading ? 'opacity-0' : 'opacity-100'}`}
                             />
                         </div>
 
@@ -871,7 +898,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             <input
                                 type="text"
                                 readOnly
-                                value={window.location.origin + '/#/alex-design'}
+                                value={window.location.origin + '/#/' + user.username}
                                 className="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-4 py-3.5 text-xs text-stone-900 truncate focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                             />
                             <button className="bg-stone-900 text-white px-4 rounded-xl hover:bg-stone-800 transition-colors" title="링크 복사">
@@ -881,7 +908,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                         {/* Live Preview Button Moved Here */}
                         <button
-                            onClick={() => window.open(window.location.origin + '/#/alex-design', '_blank')}
+                            onClick={() => window.open(window.location.origin + '/#/' + user.username, '_blank')}
                             className="w-full mt-4 bg-blue-50 text-blue-600 py-3.5 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
                         >
                             <Eye size={18} /> 새 탭에서 미리보기
@@ -932,6 +959,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                     onChange={(e) => setEditBio(e.target.value)}
                                     className="w-full border border-stone-200 bg-stone-50/50 rounded-2xl p-4 text-sm text-stone-900 h-24 resize-none focus:ring-2 focus:ring-blue-500 outline-none transition-all focus:bg-white font-medium"
                                 />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">거주지</label>
+                                    <input
+                                        value={editLocation}
+                                        onChange={(e) => setEditLocation(e.target.value)}
+                                        placeholder="예: 서울, 대한민국"
+                                        className="w-full border border-stone-200 bg-stone-50/50 rounded-2xl p-4 text-sm text-stone-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all focus:bg-white font-medium"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">작업 가능 시기</label>
+                                    <input
+                                        value={editAvailability}
+                                        onChange={(e) => setEditAvailability(e.target.value)}
+                                        placeholder="예: 2025년 상반기"
+                                        className="w-full border border-stone-200 bg-stone-50/50 rounded-2xl p-4 text-sm text-stone-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all focus:bg-white font-medium"
+                                    />
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">태그 (쉼표로 구분)</label>
@@ -1034,7 +1081,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {showAddPortfolio && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-md transition-opacity" onClick={() => setShowAddPortfolio(false)}></div>
-                    <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md relative z-10 p-8 animate-in fade-in zoom-in duration-300">
+                    <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md relative z-10 p-8 animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-300">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="font-extrabold text-2xl text-stone-900">포트폴리오 추가</h3>
                             <button onClick={() => setShowAddPortfolio(false)} className="p-2 bg-stone-50 rounded-full text-stone-400 hover:bg-stone-100 hover:text-stone-900"><X size={20} /></button>

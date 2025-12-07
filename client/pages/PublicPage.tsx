@@ -1,37 +1,104 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { UserProfile, Project, PortfolioItem } from '../types';
 import { Timeline } from '../components/Timeline';
 import { PortfolioGrid } from '../components/PortfolioGrid';
-import { Calendar, Download, ArrowRight, X, Send, CheckCircle2, Loader2, Clock, CheckCircle } from 'lucide-react';
+import { Calendar, Download, ArrowRight, X, Send, CheckCircle2, Loader2, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
+import pageService, { PublicPageData } from '../services/pageService';
 
-interface PublicPageProps {
-    user: UserProfile;
-    projects: Project[];
-    portfolio: PortfolioItem[];
-}
+export const PublicPage: React.FC = () => {
+    const { username } = useParams<{ username: string }>();
+    const [data, setData] = useState<PublicPageData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState('');
 
-export const PublicPage: React.FC<PublicPageProps> = ({ user, projects, portfolio }) => {
     const [inquiryOpen, setInquiryOpen] = useState(false);
     const [inquiryStatus, setInquiryStatus] = useState<'idle' | 'loading' | 'success'>('idle');
+    const [inquiryEmail, setInquiryEmail] = useState('');
+    const [inquiryContent, setInquiryContent] = useState('');
 
     // Timeline Detail Modal State
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-    const handleSendInquiry = () => {
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!username) return;
+            setIsLoading(true);
+            try {
+                const pageData = await pageService.getPublicPage(username);
+                setData(pageData);
+            } catch (err) {
+                console.error(err);
+                setError('사용자를 찾을 수 없습니다.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchData();
+    }, [username]);
+
+    const handleSendInquiry = async () => {
+        if (!username || !inquiryEmail || !inquiryContent) {
+            alert('이메일과 내용을 모두 입력해주세요.');
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(inquiryEmail)) {
+            alert('유효한 이메일 주소를 입력해주세요.');
+            return;
+        }
+
         setInquiryStatus('loading');
-        setTimeout(() => {
+        try {
+            await pageService.sendInquiry(username, {
+                fromEmail: inquiryEmail,
+                content: inquiryContent
+            });
             setInquiryStatus('success');
-        }, 1500);
+        } catch (err) {
+            alert('문의 전송에 실패했습니다.');
+            setInquiryStatus('idle');
+        }
     };
 
     const resetInquiry = () => {
         setInquiryOpen(false);
-        setTimeout(() => setInquiryStatus('idle'), 300);
+        setTimeout(() => {
+            setInquiryStatus('idle');
+            setInquiryEmail('');
+            setInquiryContent('');
+        }, 300);
     };
+
+    if (isLoading) {
+        return <div className="min-h-screen flex items-center justify-center bg-stone-50"><Loader2 className="animate-spin text-stone-400" size={32} /></div>;
+    }
+
+    if (error || !data) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-stone-50 text-stone-500">
+                <AlertTriangle size={48} className="mb-4 text-amber-500" />
+                <h1 className="text-2xl font-bold text-stone-900 mb-2">페이지를 찾을 수 없습니다</h1>
+                <p>{error || '잘못된 접근입니다.'}</p>
+            </div>
+        );
+    }
+
+    const { user, projects, portfolio } = data;
 
     return (
         <div className="min-h-screen bg-stone-50 font-sans text-stone-900 selection:bg-blue-100 selection:text-blue-900">
+            <Helmet>
+                <title>{user.name} | SyncUp Portfolio</title>
+                <meta name="description" content={user.bio} />
+                <meta property="og:title" content={`${user.name} - ${user.role}`} />
+                <meta property="og:description" content={user.bio} />
+                <meta property="og:image" content={user.avatarUrl} />
+                <meta property="og:type" content="profile" />
+                <meta name="twitter:card" content="summary_large_image" />
+            </Helmet>
 
             {/* 1. Header Section */}
             <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-200/50 transition-all">
@@ -76,7 +143,7 @@ export const PublicPage: React.FC<PublicPageProps> = ({ user, projects, portfoli
                                 {user.name}
                             </h1>
                             <p className="text-lg text-stone-500 font-medium flex items-center justify-center md:justify-start gap-2">
-                                {user.role} <span className="w-1.5 h-1.5 bg-stone-300 rounded-full"></span> 서울 거주
+                                {user.role} <span className="w-1.5 h-1.5 bg-stone-300 rounded-full"></span> {user.location || 'Seoul, Korea'}
                             </p>
                         </div>
 
@@ -103,15 +170,20 @@ export const PublicPage: React.FC<PublicPageProps> = ({ user, projects, portfoli
                             </div>
                             업무 일정 (Availability)
                         </h2>
-                        <span className="text-sm font-semibold text-stone-400 bg-stone-100 px-3 py-1 rounded-full">2024년 하반기</span>
+                        <span className="text-sm font-semibold text-stone-400 bg-stone-100 px-3 py-1 rounded-full">{user.availability || 'Available for new projects'}</span>
                     </div>
 
-                    <div className="bg-white p-2 rounded-[2rem] border border-stone-200 shadow-sm overflow-hidden">
-                        <div className="p-6">
-                            {/* Pass onProjectClick to handle details */}
-                            <Timeline projects={projects} onProjectClick={setSelectedProject} />
+                    {projects.length > 0 ? (
+                        <div className="bg-white p-2 rounded-[2rem] border border-stone-200 shadow-sm overflow-hidden">
+                            <div className="p-6">
+                                <Timeline projects={projects} onProjectClick={setSelectedProject} />
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="text-center p-12 bg-white rounded-3xl border border-stone-200 text-stone-400">
+                            등록된 일정이 없습니다.
+                        </div>
+                    )}
                 </section>
 
                 {/* 4. Portfolio Grid */}
@@ -123,18 +195,21 @@ export const PublicPage: React.FC<PublicPageProps> = ({ user, projects, portfoli
                             </div>
                             포트폴리오 (Portfolio)
                         </h2>
-                        <a href="#" className="group flex items-center gap-2 text-sm font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-full hover:bg-blue-100 transition-colors">
-                            전체 보기 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                        </a>
                     </div>
-                    <PortfolioGrid items={portfolio} />
+                    {portfolio.length > 0 ? (
+                        <PortfolioGrid items={portfolio} />
+                    ) : (
+                        <div className="text-center p-12 bg-white rounded-3xl border border-stone-200 text-stone-400">
+                            등록된 포트폴리오가 없습니다.
+                        </div>
+                    )}
                 </section>
 
                 {/* 5. Inquiry Form Modal */}
                 {inquiryOpen && (
                     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
                         <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-md transition-opacity" onClick={resetInquiry}></div>
-                        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg relative z-10 overflow-hidden animate-in fade-in zoom-in duration-300">
+                        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg relative z-10 overflow-hidden animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-300">
 
                             <div className="absolute top-0 right-0 p-4 z-20">
                                 <button onClick={resetInquiry} className="p-2 bg-white/20 hover:bg-white/40 text-white rounded-full transition-colors backdrop-blur-sm">
@@ -164,11 +239,22 @@ export const PublicPage: React.FC<PublicPageProps> = ({ user, projects, portfoli
                                     <div className="p-8 space-y-6">
                                         <div>
                                             <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">이메일</label>
-                                            <input type="email" className="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 text-sm text-stone-900 focus:ring-2 focus:ring-blue-500 outline-none transition-colors font-medium" placeholder="user@company.com" />
+                                            <input
+                                                type="email"
+                                                value={inquiryEmail}
+                                                onChange={(e) => setInquiryEmail(e.target.value)}
+                                                className="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 text-sm text-stone-900 focus:ring-2 focus:ring-blue-500 outline-none transition-colors font-medium"
+                                                placeholder="user@company.com"
+                                            />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">문의 내용</label>
-                                            <textarea className="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 text-sm text-stone-900 h-32 resize-none focus:ring-2 focus:ring-blue-500 outline-none transition-colors font-medium" placeholder="프로젝트에 대해 설명해주세요..." />
+                                            <textarea
+                                                value={inquiryContent}
+                                                onChange={(e) => setInquiryContent(e.target.value)}
+                                                className="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 text-sm text-stone-900 h-32 resize-none focus:ring-2 focus:ring-blue-500 outline-none transition-colors font-medium"
+                                                placeholder="프로젝트에 대해 설명해주세요..."
+                                            />
                                         </div>
                                         <button
                                             onClick={handleSendInquiry}
@@ -196,7 +282,7 @@ export const PublicPage: React.FC<PublicPageProps> = ({ user, projects, portfoli
                 {selectedProject && (
                     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
                         <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-md transition-opacity" onClick={() => setSelectedProject(null)}></div>
-                        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md relative z-10 p-8 animate-in fade-in zoom-in duration-300">
+                        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md relative z-10 p-8 animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-300">
                             <div className="flex justify-between items-start mb-6">
                                 <div>
                                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-3 ${selectedProject.status === 'in-progress' ? 'bg-blue-100 text-blue-700' : selectedProject.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'}`}>

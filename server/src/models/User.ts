@@ -2,11 +2,15 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IUser extends Document {
   email: string;
-  username: string; // 추가
+  username: string;
   password: string;
   name: string;
-  jobTitle?: string;
-  introduction?: string;
+  role: string;      // Changed from jobTitle
+  bio: string;       // Changed from introduction
+  tags: string[];    // Added
+  avatarUrl: string; // Added
+  location: string;
+  availability: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,13 +40,29 @@ const UserSchema: Schema = new Schema(
       required: true,
       trim: true,
     },
-    jobTitle: {
+    role: {
+      type: String,
+      default: 'Freelancer',
+    },
+    bio: {
       type: String,
       default: '',
     },
-    introduction: {
+    tags: {
+      type: [String],
+      default: [],
+    },
+    avatarUrl: {
       type: String,
       default: '',
+    },
+    location: {
+      type: String,
+      default: 'Seoul, Korea',
+    },
+    availability: {
+      type: String,
+      default: 'Available for new projects',
     },
   },
   {

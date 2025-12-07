@@ -1,5 +1,5 @@
 import api from './api';
-import { UserProfile } from '../../types'; // Adjust path if types.ts is in client root
+import { UserProfile } from '../types';
 
 interface LoginResponse {
     _id: string;
@@ -41,6 +41,17 @@ const authService = {
     // Verify token with backend
     getMe: async () => {
         const response = await api.get('/auth/me');
+        return response.data;
+    },
+
+    updateProfile: async (userData: Partial<UserProfile>) => {
+        const response = await api.put('/auth/profile', userData);
+        if (response.data) {
+            // Update local storage with new data to keep it in sync
+            const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+            const updatedUser = { ...currentUser, ...response.data };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+        }
         return response.data;
     }
 };

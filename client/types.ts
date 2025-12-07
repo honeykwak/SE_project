@@ -34,4 +34,6 @@ export interface UserProfile {
   email: string;
   avatarUrl: string;
   tags: string[];
+  location: string;
+  availability: string;
 }

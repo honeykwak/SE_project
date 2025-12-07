@@ -20,3 +20,153 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a29e;
 }
+
+/* Synced Ripple for Deep Resonance */
+@keyframes ripple-synced {
+  0% {
+    transform: translate(-50%, -50%) scale(0.1);
+    opacity: 0;
+    border-width: 0px;
+  }
+
+  49% {
+    transform: translate(-50%, -50%) scale(0.1);
+    opacity: 0;
+    border-width: 0px;
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0.6;
+    border-width: 15px;
+  }
+
+  /* Impact Moment */
+  100% {
+    transform: translate(-50%, -50%) scale(3.5);
+    opacity: 0;
+    border-width: 0px;
+  }
+}
+
+/* Card Impact Bounce - Fixed Rotation, Vertical Drop */
+@keyframes impact-bounce {
+
+  0%,
+  100% {
+    transform: translateY(-80px) rotate(12deg);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+
+  50% {
+    transform: translateY(60px) rotate(12deg);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  }
+
+  /* Hits water at 50% */
+}
+
+/* --- ANIMATION UTILITY POLYFILLS --- */
+/* Since we are using CDN Tailwind, we manually implement tailwindcss-animate behaviors */
+
+/* Keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn95 {
+  from {
+    transform: scale(0.95);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(10%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-10%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromBottom8 {
+  from {
+    transform: translateY(2rem);
+  }
+
+  /* 8 * 0.25rem */
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Classes matching tailwindcss-animate */
+.animate-in {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Ease-out-expo-ish */
+  animation-fill-mode: forwards;
+}
+
+.fade-in {
+  animation-name: fadeIn;
+}
+
+.zoom-in-95 {
+  /* Combine animations if needed, but simple CSS doesn't stack names easily without custom classes. 
+     We will define composite classes for the specific combinations we used. */
+}
+
+/* 
+  We used: animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200 
+  And: animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-300
+*/
+
+/* Settings Popup */
+.animate-in.fade-in.zoom-in-95.slide-in-from-bottom-2 {
+  animation-name: fadeIn, zoomIn95, slideInFromBottom;
+}
+
+/* Notification Popup */
+.animate-in.fade-in.zoom-in-95.slide-in-from-top-2 {
+  animation-name: fadeIn, zoomIn95, slideInFromTop;
+}
+
+/* Modals (Share, Project, Portfolio, Inquiry) */
+.animate-in.fade-in.zoom-in-95.slide-in-from-bottom-8 {
+  animation-name: fadeIn, zoomIn95, slideInFromBottom8;
+}
+
+/* Durations */
+.duration-200 {
+  animation-duration: 200ms;
+}
+
+.duration-300 {
+  animation-duration: 300ms;
+}
+
+.duration-700 {
+  animation-duration: 700ms;
+}
