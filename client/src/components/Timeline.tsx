@@ -1,7 +1,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import type { Project } from '../types';
-import { ChevronLeft, ChevronRight, LayoutList, KanbanSquare, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LayoutList, KanbanSquare, Clock, AlertCircle, CheckCircle2, CalendarDays, Plus } from 'lucide-react';
 
 interface TimelineProps {
     projects: Project[];
@@ -13,7 +13,7 @@ interface TimelineProps {
     customAction?: React.ReactNode;
 }
 
-type ViewMode = 'gantt' | 'list';
+type ViewMode = 'gantt' | 'list' | 'calendar';
 type DragMode = 'move' | 'resize-start' | 'resize-end' | null;
 
 export const Timeline: React.FC<TimelineProps> = ({
@@ -46,6 +46,7 @@ export const Timeline: React.FC<TimelineProps> = ({
 
     // --- Date Helpers ---
     const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+    const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay(); // 0 = Sunday
 
     const handlePrevMonth = () => {
         setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
@@ -58,7 +59,6 @@ export const Timeline: React.FC<TimelineProps> = ({
         return date.toLocaleString('ko-KR', { month: 'long', year: 'numeric' });
     };
 
-    // FIX: Use local date formatting to avoid timezone shifts (UTC vs Local)
     const formatDateLocal = (date: Date) => {
         const y = date.getFullYear();
         const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -252,7 +252,8 @@ export const Timeline: React.FC<TimelineProps> = ({
             </div>
 
             {!isMobile && !compact && (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 justify-end">
+
                     {customAction && (
                         <div className="mr-2">
                             {customAction}
@@ -264,6 +265,12 @@ export const Timeline: React.FC<TimelineProps> = ({
                             className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${viewMode === 'gantt' ? 'bg-white shadow-sm text-stone-900' : 'text-stone-500 hover:text-stone-700'}`}
                         >
                             <KanbanSquare size={16} /> <span className="hidden lg:inline">간트차트</span>
+                        </button>
+                        <button
+                            onClick={() => setViewMode('calendar')}
+                            className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${viewMode === 'calendar' ? 'bg-white shadow-sm text-stone-900' : 'text-stone-500 hover:text-stone-700'}`}
+                        >
+                            <CalendarDays size={16} /> <span className="hidden lg:inline">캘린더</span>
                         </button>
                         <button
                             onClick={() => setViewMode('list')}
@@ -447,7 +454,84 @@ export const Timeline: React.FC<TimelineProps> = ({
         );
     };
 
-    // 2. LIST VIEW (Mobile Optimized)
+    // 2. CALENDAR VIEW (Month Grid)
+    const CalendarView = () => {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const daysInMonth = getDaysInMonth(year, month);
+        const startDay = getFirstDayOfMonth(year, month);
+
+        // Create grid cells
+        const cells = [];
+        // Previous month padding
+        for (let i = 0; i < startDay; i++) {
+            cells.push(<div key={`empty-${i}`} className="h-32 border-b border-r border-stone-100 bg-stone-50/30"></div>);
+        }
+
+        // Current month days
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = formatDateLocal(new Date(year, month, d));
+            const dayProjects = projects.filter(p => {
+                const start = p.startDate;
+                const end = p.endDate;
+                return dateStr >= start && dateStr <= end;
+            });
+
+            const isToday = formatDateLocal(new Date()) === dateStr;
+
+            cells.push(
+                <div
+                    key={d}
+                    className={`min-h-[128px] border-b border-r border-stone-100 p-2 hover:bg-stone-50 transition-colors group relative ${d % 7 === 0 || d % 7 === 1 ? 'bg-stone-50/10' : ''}`}
+                    onClick={() => onEmptyClick && onEmptyClick(dateStr)}
+                >
+                    <div className={`text-xs font-bold mb-2 flex justify-between items-center ${isToday ? 'text-blue-600' : 'text-stone-400'}`}>
+                        <span className={isToday ? 'bg-blue-100 px-2 py-0.5 rounded-full' : ''}>{d}</span>
+                    </div>
+                    <div className="space-y-1">
+                        {dayProjects.map(p => (
+                            <div
+                                key={p.id}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onProjectClick) onProjectClick(p);
+                                }}
+                                // UPDATED: Use getStatusColor to match Gantt view style exactly
+                                className={`text-[10px] px-2 py-1 rounded-md truncate cursor-pointer hover:opacity-90 font-bold border ${getStatusColor(p.status)}`}
+                            >
+                                {p.title}
+                            </div>
+                        ))}
+                    </div>
+                    {/* Add Button on Hover */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 flex items-end justify-center pb-2 pointer-events-none">
+                        <span className="text-[10px] text-stone-400 bg-white border border-stone-200 px-2 py-0.5 rounded-full shadow-sm">+ 추가</span>
+                    </div>
+                </div>
+            );
+        }
+
+        const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+
+        return (
+            <div className="border border-stone-200 rounded-2xl bg-white overflow-hidden shadow-sm">
+                {/* Week Header */}
+                <div className="grid grid-cols-7 border-b border-stone-200 bg-stone-50">
+                    {weekDays.map(day => (
+                        <div key={day} className="py-3 text-center text-xs font-bold text-stone-400 uppercase tracking-wider">
+                            {day}
+                        </div>
+                    ))}
+                </div>
+                {/* Days Grid */}
+                <div className="grid grid-cols-7 bg-white">
+                    {cells}
+                </div>
+            </div>
+        );
+    };
+
+    // 3. LIST VIEW (Mobile Optimized)
     const ListView = () => {
         // Filter projects for current month
         const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
@@ -467,7 +551,7 @@ export const Timeline: React.FC<TimelineProps> = ({
                         onClick={() => onEmptyClick(formatDateLocal(new Date()))}
                         className="w-full py-4 border border-dashed border-stone-300 rounded-2xl text-stone-500 text-sm font-bold hover:bg-stone-50 hover:border-stone-400 transition-colors flex items-center justify-center gap-2"
                     >
-                        + {formatYearMonth(currentDate)} 프로젝트 추가
+                        <Plus size={16} /> {formatYearMonth(currentDate)} 프로젝트 추가
                     </button>
                 )}
 
@@ -486,7 +570,7 @@ export const Timeline: React.FC<TimelineProps> = ({
                         <div>
                             <div className="flex items-center gap-2 mb-1.5">
                                 {getStatusIcon(project.status)}
-                                <span className="text-[10px] font-extrabold uppercase text-stone-400 tracking-wider">{project.status}</span>
+                                <span className="text-[10px] font-extrabold uppercase text-stone-400 tracking-wider">{project.status === 'in-progress' ? '진행 중' : project.status === 'completed' ? '완료됨' : '계획 중'}</span>
                             </div>
                             <h3 className="font-bold text-stone-900 text-base">{project.title}</h3>
                             <p className="text-xs text-stone-500 mt-1 font-medium">
@@ -503,7 +587,7 @@ export const Timeline: React.FC<TimelineProps> = ({
     return (
         <div className="w-full select-none">
             <Header />
-            {viewMode === 'gantt' ? <GanttView /> : <ListView />}
+            {viewMode === 'gantt' ? <GanttView /> : viewMode === 'calendar' ? <CalendarView /> : <ListView />}
         </div>
     );
 };

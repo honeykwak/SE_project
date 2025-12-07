@@ -5,7 +5,8 @@ export interface PortfolioItem {
   category: string;
   description: string;
   imageUrl: string;
-  projectLink?: string;
+  projectLink?: string; // Legacy support
+  link?: string; // v2 support
 }
 
 export interface CreatePortfolioData {
@@ -14,6 +15,7 @@ export interface CreatePortfolioData {
   description?: string;
   imageUrl?: string;
   projectLink?: string;
+  link?: string;
 }
 
 export interface UpdatePortfolioData extends Partial<CreatePortfolioData> { }

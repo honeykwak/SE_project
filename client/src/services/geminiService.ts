@@ -7,7 +7,7 @@ const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || '' }
 export const generatePortfolioDescription = async (title: string, category: string, keywords: string): Promise<string> => {
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash', // Using 1.5-flash as 2.5 might not be generally available/working yet or requires different setup
+            model: 'gemini-1.5-flash',
             contents: `당신은 전문적인 프리랜서 포트폴리오를 위한 UX 카피라이터입니다. 
       포트폴리오 프로젝트에 대한 간결하고 매력적이며 전문적인 2문장 분량의 설명을 한국어로 작성해 주세요.
       
