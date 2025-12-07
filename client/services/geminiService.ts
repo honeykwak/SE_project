@@ -1,8 +1,15 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+// Initialize conditionally to prevent startup crash if key is missing
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 export const generatePortfolioDescription = async (title: string, category: string, keywords: string): Promise<string> => {
+  if (!ai) {
+    console.warn("Gemini API Key is missing. AI features are disabled.");
+    return "AI 설명 생성 기능이 비활성화되었습니다 (API Key 설정 필요).";
+  }
+
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
@@ -24,6 +31,11 @@ export const generatePortfolioDescription = async (title: string, category: stri
 };
 
 export const generateReplyDraft = async (messageContent: string, tone: 'professional' | 'friendly'): Promise<string> => {
+  if (!ai) {
+    console.warn("Gemini API Key is missing. AI features are disabled.");
+    return "AI 답장 생성 기능이 비활성화되었습니다 (API Key 설정 필요).";
+  }
+
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
