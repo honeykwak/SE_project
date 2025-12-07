@@ -79,8 +79,8 @@ const MotionBackground = () => (
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('alex@syncup.com');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
