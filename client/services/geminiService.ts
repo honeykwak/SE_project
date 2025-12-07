@@ -7,7 +7,7 @@ const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 export const generatePortfolioDescription = async (title: string, category: string, keywords: string): Promise<string> => {
   if (!ai) {
     console.warn("Gemini API Key is missing. AI features are disabled.");
-    return "AI 설명 생성 기능이 비활성화되었습니다 (API Key 설정 필요).";
+    return "AI 기능이 비활성화되었습니다. Vercel 환경 변수(VITE_GEMINI_API_KEY)를 확인해주세요.";
   }
 
   try {

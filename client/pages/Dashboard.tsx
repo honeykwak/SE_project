@@ -63,9 +63,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     dataService.getPortfolio(),
                     dataService.getInquiries()
                 ]);
-                setProjects(projData);
-                setPortfolio(portData);
-                setMessages(msgData);
+                setProjects(projData.map((p: any) => ({ ...p, id: p._id || p.id })));
+                setPortfolio(portData.map((p: any) => ({ ...p, id: p._id || p.id })));
+                setMessages(msgData.map((m: any) => ({ ...m, id: m._id || m.id })));
             } catch (error) {
                 console.error("Failed to load dashboard data", error);
                 showToast('데이터를 불러오는데 실패했습니다', 'error');
@@ -247,8 +247,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const openEditProjectModal = (project: Project) => {
         setEditingProject(project);
         setProjTitle(project.title);
-        setProjStart(project.startDate);
-        setProjEnd(project.endDate);
+        setProjStart(project.startDate ? project.startDate.split('T')[0] : '');
+        setProjEnd(project.endDate ? project.endDate.split('T')[0] : '');
         setProjStatus(project.status);
         setShowProjectModal(true);
     };
@@ -639,7 +639,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                             { id: 'all', label: '전체', dotClass: 'hidden' },
                                             { id: 'in-progress', label: '진행 중', dotClass: 'bg-blue-600' },
                                             { id: 'planning', label: '계획 중', dotClass: 'bg-stone-100 border border-stone-300 border-dashed' },
-                                            { id: 'completed', label: '완료됨', dotClass: 'bg-stone-400' }
+                                            { id: 'completed', label: '완료됨', dotClass: 'bg-green-600' }
                                         ].map(filter => (
                                             <button
                                                 key={filter.id}
@@ -867,7 +867,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 value={window.location.origin + '/#/' + user.username}
                                 className="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-4 py-3.5 text-xs text-stone-900 truncate focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                             />
-                            <button className="bg-stone-900 text-white px-4 rounded-xl hover:bg-stone-800 transition-colors" title="링크 복사">
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(window.location.origin + '/#/' + user.username);
+                                    showToast('링크가 복사되었습니다', 'success');
+                                }}
+                                className="bg-stone-900 text-white px-4 rounded-xl hover:bg-stone-800 transition-colors"
+                                title="링크 복사"
+                            >
                                 <Copy size={18} />
                             </button>
                         </div>
