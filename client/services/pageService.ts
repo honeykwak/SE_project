@@ -13,7 +13,7 @@ const pageService = {
         return response.data;
     },
 
-    sendInquiry: async (username: string, data: { fromEmail: string; content: string }) => {
+    sendInquiry: async (username: string, data: { senderName: string; senderEmail: string; message: string }) => {
         const response = await api.post(`/inquiry/${username}`, data);
         return response.data;
     }

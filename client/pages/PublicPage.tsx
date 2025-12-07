@@ -20,6 +20,7 @@ export const PublicPage: React.FC = () => {
 
     const [inquiryOpen, setInquiryOpen] = useState(false);
     const [inquiryStatus, setInquiryStatus] = useState<'idle' | 'loading' | 'success'>('idle');
+    const [inquiryName, setInquiryName] = useState('');
     const [inquiryEmail, setInquiryEmail] = useState('');
     const [inquiryContent, setInquiryContent] = useState('');
 
@@ -44,8 +45,8 @@ export const PublicPage: React.FC = () => {
     }, [username]);
 
     const handleSendInquiry = async () => {
-        if (!username || !inquiryEmail || !inquiryContent) {
-            showError('이메일과 내용을 모두 입력해주세요.');
+        if (!username || !inquiryName || !inquiryEmail || !inquiryContent) {
+            showError('이름, 이메일, 내용을 모두 입력해주세요.');
             return;
         }
 
@@ -58,8 +59,9 @@ export const PublicPage: React.FC = () => {
         setInquiryStatus('loading');
         try {
             await pageService.sendInquiry(username, {
-                fromEmail: inquiryEmail,
-                content: inquiryContent
+                senderName: inquiryName,
+                senderEmail: inquiryEmail,
+                message: inquiryContent
             });
             setInquiryStatus('success');
             // success('문의가 성공적으로 전송되었습니다!'); // Optional: The UI already shows a success modal, maybe skip toast or keep it? 
@@ -75,6 +77,7 @@ export const PublicPage: React.FC = () => {
         setInquiryOpen(false);
         setTimeout(() => {
             setInquiryStatus('idle');
+            setInquiryName('');
             setInquiryEmail('');
             setInquiryContent('');
         }, 300);
@@ -261,6 +264,16 @@ export const PublicPage: React.FC = () => {
                                     </div>
 
                                     <div className="p-8 space-y-6">
+                                        <div>
+                                            <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">이름</label>
+                                            <input
+                                                type="text"
+                                                value={inquiryName}
+                                                onChange={(e) => setInquiryName(e.target.value)}
+                                                className="w-full bg-stone-50 border border-stone-200 rounded-xl p-4 text-sm text-stone-900 focus:ring-2 focus:ring-blue-500 outline-none transition-colors font-medium"
+                                                placeholder="홍길동"
+                                            />
+                                        </div>
                                         <div>
                                             <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">이메일</label>
                                             <input
