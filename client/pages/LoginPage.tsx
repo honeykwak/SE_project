@@ -79,25 +79,69 @@ const MotionBackground = () => (
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const navigate = useNavigate();
+
+  // Toggle State
+  const [isLogin, setIsLogin] = useState(true);
+
+  // Form State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState(''); // Only for signup
+  const [username, setUsername] = useState(''); // Only for signup
+  const [confirmPassword, setConfirmPassword] = useState(''); // Only for signup
+
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  // Reset form when switching modes
+  const toggleMode = () => {
+    setIsLogin(!isLogin);
+    setEmail('');
+    setPassword('');
+    setName('');
+    setUsername('');
+    setConfirmPassword('');
+  };
+
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
     try {
-      const data = await authService.login({ email, password });
-      onLogin(data); // Update App state
-      navigate('/dashboard');
+      if (isLogin) {
+        // LOGIN MODE
+        const data = await authService.login({ email, password });
+        onLogin(data);
+        navigate('/dashboard');
+      } else {
+        // SIGNUP MODE
+        if (password !== confirmPassword) {
+          alert('비밀번호가 일치하지 않습니다.');
+          setIsLoading(false);
+          return;
+        }
+
+        // Simple validation
+        if (!name || !email || !password || !username) {
+          alert('모든 필드를 입력해주세요.');
+          setIsLoading(false);
+          return;
+        }
+
+        const data = await authService.register({
+          name,
+          email,
+          password,
+          username // Use explicit username
+        });
+        onLogin(data);
+        navigate('/dashboard');
+      }
     } catch (error) {
-      alert('로그인 실패: 아이디와 비밀번호를 확인해주세요.');
+      alert(isLogin ? '로그인 실패: 정보를 확인해주세요.' : '회원가입 실패: 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
     }
   };
-
-
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center md:justify-start relative font-sans text-stone-900 overflow-hidden p-6 md:p-0">
@@ -117,23 +161,58 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               <path d="M21 21v-5h-5" />
             </svg>
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-stone-900 mb-3">SyncUp.</h1>
+          <h1 className="text-4xl font-extrabold tracking-tight text-stone-900 mb-3">{isLogin ? 'SyncUp.' : '회원가입'}</h1>
           <p className="text-stone-600 text-base font-medium leading-relaxed">
-            <span className="text-blue-600 font-bold">개인 가용성 허브 서비스</span><br />
-            기업과 프리랜서를 잇는 최적의 솔루션
+            {isLogin ? (
+              <>
+                <span className="text-blue-600 font-bold">개인 가용성 허브 서비스</span><br />
+                기업과 프리랜서를 잇는 최적의 솔루션
+              </>
+            ) : (
+              <>
+                프리랜서 여정을 <span className="text-blue-600 font-bold">SyncUp</span>과 함께 시작하세요.
+              </>
+            )}
           </p>
         </div>
 
-        {/* Login Card */}
-        <div className="bg-white/70 backdrop-blur-xl border border-white/60 shadow-2xl rounded-3xl p-8">
-          <form onSubmit={handleLogin} className="space-y-4">
+        {/* Auth Card */}
+        <div className="bg-white/70 backdrop-blur-xl border border-white/60 shadow-2xl rounded-3xl p-8 transition-all duration-300">
+          <form onSubmit={handleAuth} className="space-y-4">
+
+            {/* Name Field (Signup Only) */}
+            {!isLogin && (
+              <div className="animate-in fade-in slide-in-from-top-2 space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-stone-900 mb-1.5 ml-1">이름</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="홍길동"
+                    className="w-full px-4 py-3.5 bg-white/80 border border-stone-200/80 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-stone-400 text-sm hover:bg-white text-stone-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-stone-900 mb-1.5 ml-1">아이디 (URL용)</label>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="english_only"
+                    className="w-full px-4 py-3.5 bg-white/80 border border-stone-200/80 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-stone-400 text-sm hover:bg-white text-stone-900"
+                  />
+                </div>
+              </div>
+            )}
+
             <div>
-              <label className="block text-xs font-bold text-stone-900 mb-1.5 ml-1">아이디</label>
+              <label className="block text-xs font-bold text-stone-900 mb-1.5 ml-1">아이디 (이메일)</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="아이디를 입력해 주세요."
+                placeholder="user@example.com"
                 className="w-full px-4 py-3.5 bg-white/80 border border-stone-200/80 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-stone-400 text-sm hover:bg-white text-stone-900"
               />
             </div>
@@ -144,10 +223,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="비밀번호를 입력해 주세요."
+                placeholder="8자 이상 입력해주세요"
                 className="w-full px-4 py-3.5 bg-white/80 border border-stone-200/80 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-stone-400 text-sm hover:bg-white text-stone-900"
               />
             </div>
+
+            {/* Confirm Password (Signup Only) */}
+            {!isLogin && (
+              <div className="animate-in fade-in slide-in-from-top-2">
+                <label className="block text-xs font-bold text-stone-900 mb-1.5 ml-1">비밀번호 확인</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="비밀번호를 다시 입력해주세요"
+                  className="w-full px-4 py-3.5 bg-white/80 border border-stone-200/80 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-stone-400 text-sm hover:bg-white text-stone-900"
+                />
+              </div>
+            )}
 
             <div className="pt-3">
               <button
@@ -155,52 +248,55 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 disabled={isLoading}
                 className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98] flex items-center justify-center gap-2"
               >
-                {isLoading ? <Loader2 className="animate-spin" size={20} /> : '로그인'}
+                {isLoading ? <Loader2 className="animate-spin" size={20} /> : (isLogin ? '로그인' : '가입하기')}
               </button>
             </div>
           </form>
 
-          {/* Divider with Text */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-stone-300/50"></div>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white/50 px-3 text-stone-400 font-bold backdrop-blur-sm rounded-full">또는</span>
-            </div>
-          </div>
-
-          {/* Google Login Button */}
-          <div>
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard')}
-              className="w-full bg-white text-stone-600 border border-stone-200 font-bold py-3.5 rounded-xl hover:bg-stone-50 transition-colors text-sm flex items-center justify-center gap-2 group shadow-sm hover:shadow-md"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.26.81-.58z" fill="#FBBC05" />
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-              </svg>
-              Google 계정으로 계속하기
-            </button>
-          </div>
-
-          {/* Sign Up Text Link */}
+          {/* Toggle Link */}
           <div className="mt-6 text-center text-sm font-medium text-stone-500">
-            아직 계정이 없으신가요?{' '}
+            {isLogin ? '아직 계정이 없으신가요?' : '이미 계정이 있으신가요?'}{' '}
             <button
-              onClick={() => navigate('/signup')}
+              onClick={toggleMode}
               className="text-blue-600 font-bold hover:underline"
             >
-              회원가입
+              {isLogin ? '회원가입' : '로그인'}
             </button>
           </div>
+
+
+          {/* Social Login (Only show on Login mode for simplicity, or both) */}
+          {isLogin && (
+            <>
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-stone-300/50"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white/50 px-3 text-stone-400 font-bold backdrop-blur-sm rounded-full">또는</span>
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/dashboard')}
+                  className="w-full bg-white text-stone-600 border border-stone-200 font-bold py-3.5 rounded-xl hover:bg-stone-50 transition-colors text-sm flex items-center justify-center gap-2 group shadow-sm hover:shadow-md"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.26.81-.58z" fill="#FBBC05" />
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                  </svg>
+                  Google 계정으로 계속하기
+                </button>
+              </div>
+            </>
+          )}
 
         </div>
 
-        {/* Copyright */}
         <div className="text-center md:text-left mt-8 text-xs text-stone-400 font-medium pl-1">
           © 2025 SyncUp. All rights reserved.
         </div>

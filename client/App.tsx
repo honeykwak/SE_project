@@ -4,7 +4,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PublicPage } from './pages/PublicPage';
 import { Dashboard } from './pages/Dashboard';
 import { LoginPage } from './pages/LoginPage';
-import { SignUpPage } from './pages/SignUpPage';
+
 import { UserProfile } from './types';
 import authService from './services/authService';
 
@@ -35,7 +35,8 @@ const App: React.FC = () => {
     <HashRouter>
       <Routes>
         <Route path="/login" element={<LoginPage onLogin={(u) => setUser(u)} />} />
-        <Route path="/signup" element={<SignUpPage onLogin={(u) => setUser(u)} />} />
+        <Route path="/login" element={<LoginPage onLogin={(u) => setUser(u)} />} />
+
 
         {/* Public facing page (what clients see) - Uses URL param for username */}
         <Route path="/:username" element={<PublicPage />} />
