@@ -1,7 +1,0 @@
-{
-  "name": "SyncUp - Professional Freelance Hub",
-  "description": "A design-forward platform combining portfolio management, scheduling, and client inquiry handling. Features AI-assisted writing.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
-}

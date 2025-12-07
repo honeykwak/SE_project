@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PublicPage } from './pages/PublicPage';
 import { Dashboard } from './pages/Dashboard';
 import { LoginPage } from './pages/LoginPage';
 import { SignUpPage } from './pages/SignUpPage';
 import { Project, UserProfile, PortfolioItem, Message } from './types';
+import authService from './services/authService';
 
 // --- RICH MOCK DATA GENERATION (KOREAN) ---
 
@@ -31,97 +32,97 @@ const MOCK_USER: UserProfile = {
 
 // Varied projects to test Gantt chart visualization
 const MOCK_PROJECTS: Project[] = [
-  { 
-    id: '1', 
-    title: '핀테크 모바일 앱 리뉴얼', 
-    client: '뱅크코리아', 
-    startDate: daysFromNow(-15), 
-    endDate: daysFromNow(20), 
-    status: 'in-progress', 
-    description: '모바일 뱅킹 경험의 완전한 재설계 프로젝트입니다.' 
+  {
+    id: '1',
+    title: '핀테크 모바일 앱 리뉴얼',
+    client: '뱅크코리아',
+    startDate: daysFromNow(-15),
+    endDate: daysFromNow(20),
+    status: 'in-progress',
+    description: '모바일 뱅킹 경험의 완전한 재설계 프로젝트입니다.'
   },
-  { 
-    id: '2', 
-    title: '3분기 마케팅 에셋 제작', 
-    client: '쇼피파이', 
-    startDate: daysFromNow(-5), 
-    endDate: daysFromNow(5), 
-    status: 'in-progress', 
-    description: '소셜 미디어 및 광고 크리에이티브 제작.' 
+  {
+    id: '2',
+    title: '3분기 마케팅 에셋 제작',
+    client: '쇼피파이',
+    startDate: daysFromNow(-5),
+    endDate: daysFromNow(5),
+    status: 'in-progress',
+    description: '소셜 미디어 및 광고 크리에이티브 제작.'
   },
-  { 
-    id: '3', 
-    title: 'SaaS 대시보드 MVP', 
-    client: '테크플로우', 
-    startDate: daysFromNow(10), 
-    endDate: daysFromNow(45), 
-    status: 'planning', 
-    description: '관리자 대시보드 초기 디자인 및 기획.' 
+  {
+    id: '3',
+    title: 'SaaS 대시보드 MVP',
+    client: '테크플로우',
+    startDate: daysFromNow(10),
+    endDate: daysFromNow(45),
+    status: 'planning',
+    description: '관리자 대시보드 초기 디자인 및 기획.'
   },
-  { 
-    id: '4', 
-    title: '디자인 시스템 감수', 
-    client: '앱코퍼레이션', 
-    startDate: daysFromNow(25), 
-    endDate: daysFromNow(35), 
-    status: 'planning', 
-    description: '현재 컴포넌트의 접근성 및 사용성 검토.' 
+  {
+    id: '4',
+    title: '디자인 시스템 감수',
+    client: '앱코퍼레이션',
+    startDate: daysFromNow(25),
+    endDate: daysFromNow(35),
+    status: 'planning',
+    description: '현재 컴포넌트의 접근성 및 사용성 검토.'
   },
-  { 
-    id: '5', 
-    title: '레거시 웹사이트 마이그레이션', 
-    client: '올드스쿨', 
-    startDate: daysFromNow(-40), 
-    endDate: daysFromNow(-10), 
-    status: 'completed', 
-    description: '워드프레스에서 Webflow로 이전 작업.' 
+  {
+    id: '5',
+    title: '레거시 웹사이트 마이그레이션',
+    client: '올드스쿨',
+    startDate: daysFromNow(-40),
+    endDate: daysFromNow(-10),
+    status: 'completed',
+    description: '워드프레스에서 Webflow로 이전 작업.'
   },
-  { 
-    id: '6', 
-    title: 'UX 컨설팅 미팅', 
-    client: '스타트업 X', 
-    startDate: daysFromNow(2), 
-    endDate: daysFromNow(3), 
-    status: 'planning', 
-    description: '사용자 경험 컨설팅 세션.' 
+  {
+    id: '6',
+    title: 'UX 컨설팅 미팅',
+    client: '스타트업 X',
+    startDate: daysFromNow(2),
+    endDate: daysFromNow(3),
+    status: 'planning',
+    description: '사용자 경험 컨설팅 세션.'
   },
 ];
 
 const MOCK_PORTFOLIO: PortfolioItem[] = [
-  { 
-    id: '1', 
-    title: '네오뱅크 모바일 경험', 
-    category: '모바일 앱', 
-    imageUrl: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80', 
-    description: 'Z세대를 위한 금융 문해력 향상과 게이미피케이션에 초점을 맞춘 뱅킹 앱 리뉴얼.' 
+  {
+    id: '1',
+    title: '네오뱅크 모바일 경험',
+    category: '모바일 앱',
+    imageUrl: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+    description: 'Z세대를 위한 금융 문해력 향상과 게이미피케이션에 초점을 맞춘 뱅킹 앱 리뉴얼.'
   },
-  { 
-    id: '2', 
-    title: '물류 분석 대시보드', 
-    category: '웹 플랫폼', 
-    imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80', 
-    description: '기업 물류의 실시간 배송 추적을 위한 데이터 시각화 플랫폼.' 
+  {
+    id: '2',
+    title: '물류 분석 대시보드',
+    category: '웹 플랫폼',
+    imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+    description: '기업 물류의 실시간 배송 추적을 위한 데이터 시각화 플랫폼.'
   },
-  { 
-    id: '3', 
-    title: '여행 예약 사용자 흐름', 
-    category: 'UX 리서치', 
-    imageUrl: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80', 
-    description: '집중적인 사용자 테스트와 프로토타이핑을 통해 항공권 예약 과정의 이탈률 개선.' 
+  {
+    id: '3',
+    title: '여행 예약 사용자 흐름',
+    category: 'UX 리서치',
+    imageUrl: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+    description: '집중적인 사용자 테스트와 프로토타이핑을 통해 항공권 예약 과정의 이탈률 개선.'
   },
-  { 
-    id: '4', 
-    title: '미니멀리스트 커피 브랜드', 
-    category: '브랜딩', 
-    imageUrl: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80', 
-    description: '시애틀의 고급 스페셜티 커피 로스터리를 위한 브랜드 아이덴티티 디자인.' 
+  {
+    id: '4',
+    title: '미니멀리스트 커피 브랜드',
+    category: '브랜딩',
+    imageUrl: 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+    description: '시애틀의 고급 스페셜티 커피 로스터리를 위한 브랜드 아이덴티티 디자인.'
   },
-  { 
-    id: '5', 
-    title: '스마트 홈 인터페이스', 
-    category: 'IoT 디자인', 
-    imageUrl: 'https://images.unsplash.com/photo-1558002038-109177381792?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80', 
-    description: '통합 스마트 홈 생태계를 위한 제어 패널 디자인.' 
+  {
+    id: '5',
+    title: '스마트 홈 인터페이스',
+    category: 'IoT 디자인',
+    imageUrl: 'https://images.unsplash.com/photo-1558002038-109177381792?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+    description: '통합 스마트 홈 생태계를 위한 제어 패널 디자인.'
   },
 ];
 
@@ -133,66 +134,64 @@ const MOCK_MESSAGES: Message[] = [
 ];
 
 const App: React.FC = () => {
-  // Use MOCK data directly without persistence
-  const [user, setUser] = useState<UserProfile>(MOCK_USER);
-  const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
-  const [portfolio, setPortfolio] = useState<PortfolioItem[]>(MOCK_PORTFOLIO);
-  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const initAuth = async () => {
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
+      }
+      setIsLoading(false);
+    };
+    initAuth();
+  }, []);
 
   const handleUpdateUser = (updatedUser: UserProfile) => {
     setUser(updatedUser);
+    // In a real app, you might also want to update backend here or in Dashboard
   };
 
-  const handleAddProject = (p: Project) => setProjects([...projects, p]);
-  
-  const handleUpdateProject = (updatedProject: Project) => {
-    setProjects(projects.map(p => p.id === updatedProject.id ? updatedProject : p));
-  };
+  if (isLoading) {
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  }
 
-  const handleDeleteProject = (id: string) => {
-    setProjects(projects.filter(p => p.id !== id));
-  };
-
-  const handleAddPortfolio = (p: PortfolioItem) => setPortfolio([...portfolio, p]);
-
-  const handleDeletePortfolio = (id: string) => {
-    setPortfolio(portfolio.filter(p => p.id !== id));
-  };
-
-  const handleMarkAsRead = (id: string) => {
-    setMessages(messages.map(m => m.id === id ? { ...m, read: true } : m));
+  // Helper to ensure UserProfile match
+  const validUser = user || {
+    name: "Guest",
+    role: "Visitor",
+    bio: "",
+    email: "",
+    avatarUrl: "https://via.placeholder.com/150",
+    tags: []
   };
 
   return (
     <HashRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/login" element={<LoginPage onLogin={(u) => setUser(u)} />} />
+        <Route path="/signup" element={<SignUpPage onLogin={(u) => setUser(u)} />} />
 
         {/* Public facing page (what clients see) */}
         <Route path="/:username" element={
-          <PublicPage 
-            user={user} 
-            projects={projects} 
-            portfolio={portfolio} 
+          <PublicPage
+            user={validUser}
+            projects={[]}
+            portfolio={[]}
           />
         } />
-        
+
         {/* Private Dashboard (what freelancer sees) */}
         <Route path="/dashboard" element={
-          <Dashboard 
-            user={user} 
-            projects={projects} 
-            portfolio={portfolio} 
-            messages={messages}
-            onAddProject={handleAddProject}
-            onUpdateProject={handleUpdateProject}
-            onDeleteProject={handleDeleteProject}
-            onAddPortfolio={handleAddPortfolio}
-            onDeletePortfolio={handleDeletePortfolio}
-            onMarkAsRead={handleMarkAsRead}
-            onUpdateUser={handleUpdateUser}
-          />
+          user ? (
+            <Dashboard
+              user={user}
+              onUpdateUser={handleUpdateUser}
+            />
+          ) : (
+            <Navigate to="/login" replace />
+          )
         } />
 
         {/* Default Redirect */}
