@@ -72,6 +72,22 @@ export const PublicPage: React.FC = () => {
         }, 300);
     };
 
+    // Increment visit count on mount
+    useEffect(() => {
+        const incrementVisit = async () => {
+            try {
+                if (username) {
+                    await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/page/${username}/visit`, {
+                        method: 'POST',
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to increment visit count', error);
+            }
+        };
+        incrementVisit();
+    }, [username]);
+
     if (isLoading) {
         return <div className="min-h-screen flex items-center justify-center bg-stone-50"><Loader2 className="animate-spin text-stone-400" size={32} /></div>;
     }
@@ -133,7 +149,7 @@ export const PublicPage: React.FC = () => {
                         </div>
                         <div className="absolute -bottom-4 -right-4 z-20 bg-blue-600 text-white px-4 py-1.5 rounded-full text-xs font-bold border-4 border-white shadow-lg flex items-center gap-1 animate-bounce">
                             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                            프로젝트 수주 가능
+                            {user.availability || 'Available'}
                         </div>
                     </div>
 

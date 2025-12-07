@@ -11,6 +11,7 @@ export interface IUser extends Document {
   avatarUrl: string; // Added
   location: string;
   availability: string;
+  visits: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -63,6 +64,10 @@ const UserSchema: Schema = new Schema(
     availability: {
       type: String,
       default: 'Available for new projects',
+    },
+    visits: {
+      type: Number,
+      default: 0,
     },
   },
   {

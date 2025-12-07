@@ -19,6 +19,7 @@ import {
     QrCode,
     Copy,
     Link,
+    UploadCloud,
     LogOut,
     User,
     CreditCard,
@@ -127,9 +128,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const [newPfDesc, setNewPfDesc] = useState('');
     const [newPfImg, setNewPfImg] = useState('');
 
-    // Upload Simulation State
-    const [isUploading, setIsUploading] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState(0);
+
 
     // -- Inbox State --
     const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
@@ -299,28 +298,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         }
     };
 
-    // Fake Upload Simulation
-    const handleImageUpload = () => {
-        setIsUploading(true);
-        setUploadProgress(0);
 
-        const interval = setInterval(() => {
-            setUploadProgress(prev => {
-                if (prev >= 100) {
-                    clearInterval(interval);
-                    setIsUploading(false);
-                    setNewPfImg(`https://picsum.photos/seed/${Date.now()}/800/600`); // Mock Image
-                    return 100;
-                }
-                return prev + 10;
-            });
-        }, 100);
-    };
-
-    const handleRemoveImage = () => {
-        setNewPfImg('');
-        setUploadProgress(0);
-    };
 
     const handleSavePortfolio = async () => {
         try {
@@ -616,10 +594,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                                 <LayoutDashboard size={24} />
                                             </div>
                                             <div>
-                                                <div className="text-stone-400 text-xs font-bold uppercase mb-0.5 tracking-wider">완료된 프로젝트</div>
+                                                <div className="text-stone-400 text-xs font-bold uppercase mb-0.5 tracking-wider">총 방문수</div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-3xl font-extrabold text-stone-900">{projects.filter(p => p.status === 'completed').length}</span>
-                                                    <span className="text-blue-600 text-[10px] font-bold bg-blue-50 px-2 py-0.5 rounded-full">Accumulated</span>
+                                                    <span className="text-3xl font-extrabold text-stone-900">{(user.visits || 0).toLocaleString()}</span>
+                                                    <span className="text-blue-600 text-[10px] font-bold bg-blue-50 px-2 py-0.5 rounded-full">+Real</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -928,11 +906,61 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             <button onClick={() => setShowProfileModal(false)} className="p-2 bg-stone-50 rounded-full text-stone-400 hover:bg-stone-100 hover:text-stone-900"><X size={20} /></button>
                         </div>
                         <div className="space-y-4">
-                            <div className="flex justify-center mb-4">
-                                <div className="relative group cursor-pointer">
-                                    <img src={editAvatar} className="w-24 h-24 rounded-full object-cover ring-4 ring-stone-100" />
+
+                            {/* Avatar Upload Selection */}
+                            <div className="flex flex-col items-center gap-4 mb-6">
+                                <div className="relative group cursor-pointer" onClick={() => document.getElementById('avatar-upload')?.click()}>
+                                    <img
+                                        src={editAvatar || 'https://via.placeholder.com/150'}
+                                        className="w-24 h-24 rounded-full object-cover ring-4 ring-stone-100 shadow-md"
+                                        alt="Avatar Preview"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150';
+                                        }}
+                                    />
                                     <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <span className="text-white text-xs font-bold">변경</span>
+                                        <div className="text-white text-xs font-bold flex flex-col items-center">
+                                            <UploadCloud size={16} className="mb-1" />
+                                            <span>변경</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input
+                                    id="avatar-upload"
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            if (file.size > 5 * 1024 * 1024) {
+                                                alert('파일 크기는 5MB 이하여야 합니다.');
+                                                return;
+                                            }
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => {
+                                                setEditAvatar(reader.result as string);
+                                            };
+                                            reader.readAsDataURL(file);
+                                        }
+                                    }}
+                                />
+
+                                {/* Toggle between Link and Upload (Visual Only, logic handles both) */}
+                                <div className="w-full">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="h-px bg-stone-200 flex-1"></span>
+                                        <span className="text-[10px] font-bold text-stone-400 uppercase">OR Image Link</span>
+                                        <span className="h-px bg-stone-200 flex-1"></span>
+                                    </div>
+                                    <div className="relative">
+                                        <Link size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+                                        <input
+                                            value={editAvatar}
+                                            onChange={(e) => setEditAvatar(e.target.value)}
+                                            placeholder="이미지 주소 (URL) 직접 입력"
+                                            className="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-600 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -995,172 +1023,207 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 저장하기
                             </button>
                         </div>
-                    </div>
-                </div>
-            )}
+                    </div >
+                </div >
+            )
+            }
 
             {/* 1. Add/Edit Project Modal */}
-            {showProjectModal && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-md transition-opacity" onClick={() => setShowProjectModal(false)}></div>
-                    <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md relative z-10 p-8 animate-in fade-in zoom-in duration-300">
-                        <div className="flex justify-between items-center mb-8">
-                            <h3 className="font-extrabold text-2xl text-stone-900">{editingProject ? '프로젝트 수정' : '새 프로젝트'}</h3>
-                            <button onClick={() => setShowProjectModal(false)} className="p-2 bg-stone-50 rounded-full text-stone-400 hover:bg-stone-100 hover:text-stone-900"><X size={20} /></button>
-                        </div>
-                        <div className="space-y-6">
-                            <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">프로젝트명</label>
-                                <input
-                                    type="text"
-                                    value={projTitle}
-                                    onChange={e => setProjTitle(e.target.value)}
-                                    className="w-full border border-stone-200 bg-stone-50/50 rounded-2xl p-4 text-sm text-stone-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all focus:bg-white font-medium"
-                                    placeholder="예: 웹사이트 리뉴얼"
-                                />
+            {
+                showProjectModal && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-md transition-opacity" onClick={() => setShowProjectModal(false)}></div>
+                        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md relative z-10 p-8 animate-in fade-in zoom-in duration-300">
+                            <div className="flex justify-between items-center mb-8">
+                                <h3 className="font-extrabold text-2xl text-stone-900">{editingProject ? '프로젝트 수정' : '새 프로젝트'}</h3>
+                                <button onClick={() => setShowProjectModal(false)} className="p-2 bg-stone-50 rounded-full text-stone-400 hover:bg-stone-100 hover:text-stone-900"><X size={20} /></button>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-6">
                                 <div>
-                                    <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">시작일</label>
+                                    <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">프로젝트명</label>
                                     <input
-                                        type="date"
-                                        value={projStart}
-                                        onChange={e => setProjStart(e.target.value)}
-                                        className="w-full border border-stone-200 bg-stone-50/50 rounded-2xl p-4 text-sm text-stone-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all focus:bg-white font-medium [color-scheme:light]"
+                                        type="text"
+                                        value={projTitle}
+                                        onChange={e => setProjTitle(e.target.value)}
+                                        className="w-full border border-stone-200 bg-stone-50/50 rounded-2xl p-4 text-sm text-stone-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all focus:bg-white font-medium"
+                                        placeholder="예: 웹사이트 리뉴얼"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">종료일</label>
-                                    <input
-                                        type="date"
-                                        value={projEnd}
-                                        onChange={e => setProjEnd(e.target.value)}
-                                        className="w-full border border-stone-200 bg-stone-50/50 rounded-2xl p-4 text-sm text-stone-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all focus:bg-white font-medium [color-scheme:light]"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">상태</label>
-                                <div className="relative">
-                                    <select
-                                        value={projStatus}
-                                        onChange={(e: any) => setProjStatus(e.target.value)}
-                                        className="w-full border border-stone-200 bg-stone-50/50 rounded-2xl p-4 text-sm text-stone-900 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none font-medium"
-                                    >
-                                        <option value="planning">계획 중</option>
-                                        <option value="in-progress">진행 중</option>
-                                        <option value="completed">완료됨</option>
-                                    </select>
-                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-stone-400">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6" /></svg>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">시작일</label>
+                                        <input
+                                            type="date"
+                                            value={projStart}
+                                            onChange={e => setProjStart(e.target.value)}
+                                            className="w-full border border-stone-200 bg-stone-50/50 rounded-2xl p-4 text-sm text-stone-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all focus:bg-white font-medium [color-scheme:light]"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">종료일</label>
+                                        <input
+                                            type="date"
+                                            value={projEnd}
+                                            onChange={e => setProjEnd(e.target.value)}
+                                            className="w-full border border-stone-200 bg-stone-50/50 rounded-2xl p-4 text-sm text-stone-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all focus:bg-white font-medium [color-scheme:light]"
+                                        />
                                     </div>
                                 </div>
-                            </div>
-                            <div className="flex gap-3 pt-4">
-                                {editingProject && (
+                                <div>
+                                    <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">상태</label>
+                                    <div className="relative">
+                                        <select
+                                            value={projStatus}
+                                            onChange={(e: any) => setProjStatus(e.target.value)}
+                                            className="w-full border border-stone-200 bg-stone-50/50 rounded-2xl p-4 text-sm text-stone-900 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none font-medium"
+                                        >
+                                            <option value="planning">계획 중</option>
+                                            <option value="in-progress">진행 중</option>
+                                            <option value="completed">완료됨</option>
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-stone-400">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6" /></svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3 pt-4">
+                                    {editingProject && (
+                                        <button
+                                            onClick={() => handleDeleteProjectAction(editingProject.id)}
+                                            className="flex-1 bg-red-50 text-red-600 py-4 rounded-xl text-sm font-bold hover:bg-red-100 transition-colors"
+                                        >
+                                            삭제
+                                        </button>
+                                    )}
                                     <button
-                                        onClick={() => handleDeleteProjectAction(editingProject.id)}
-                                        className="flex-1 bg-red-50 text-red-600 py-4 rounded-xl text-sm font-bold hover:bg-red-100 transition-colors"
+                                        onClick={handleSaveProject}
+                                        className="flex-1 bg-stone-900 text-white py-4 rounded-xl text-sm font-bold hover:bg-stone-800 transition-all shadow-lg shadow-stone-900/10 active:scale-95"
                                     >
-                                        삭제
+                                        저장하기
                                     </button>
-                                )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* 2. Add Portfolio Modal */}
+            {
+                showAddPortfolio && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-md transition-opacity" onClick={() => setShowAddPortfolio(false)}></div>
+                        <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md relative z-10 p-8 animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-300">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="font-extrabold text-2xl text-stone-900">포트폴리오 추가</h3>
+                                <button onClick={() => setShowAddPortfolio(false)} className="p-2 bg-stone-50 rounded-full text-stone-400 hover:bg-stone-100 hover:text-stone-900"><X size={20} /></button>
+                            </div>
+                            <div className="space-y-5">
+                                {/* Image Upload Area */}
+                                <div>
+                                    <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">커버 이미지</label>
+                                    {!newPfImg ? (
+                                        <div className="space-y-4">
+                                            {/* File Upload Area */}
+                                            <div
+                                                onClick={() => document.getElementById('portfolio-upload')?.click()}
+                                                className="w-full h-32 border-2 border-dashed border-stone-200 rounded-2xl bg-stone-50 hover:bg-blue-50 hover:border-blue-200 transition-colors cursor-pointer flex flex-col items-center justify-center gap-3 relative overflow-hidden group"
+                                            >
+                                                <div className="p-3 bg-white rounded-full shadow-sm text-stone-400 group-hover:text-blue-500 transition-colors">
+                                                    <UploadCloud size={24} />
+                                                </div>
+                                                <div className="text-center">
+                                                    <p className="text-sm font-bold text-stone-600 group-hover:text-blue-700">이미지 업로드</p>
+                                                    <p className="text-[10px] text-stone-400 mt-1">클릭하여 파일 선택 (Max 5MB)</p>
+                                                </div>
+                                                <input
+                                                    id="portfolio-upload"
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            if (file.size > 5 * 1024 * 1024) {
+                                                                alert('파일 크기는 5MB 이하여야 합니다.');
+                                                                return;
+                                                            }
+                                                            const reader = new FileReader();
+                                                            reader.onloadend = () => {
+                                                                setNewPfImg(reader.result as string);
+                                                            };
+                                                            reader.readAsDataURL(file);
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+
+                                            {/* Link Input Area */}
+                                            <div className="w-full">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="h-px bg-stone-200 flex-1"></span>
+                                                    <span className="text-[10px] font-bold text-stone-400 uppercase">OR Image Link</span>
+                                                    <span className="h-px bg-stone-200 flex-1"></span>
+                                                </div>
+                                                <div className="relative">
+                                                    <Link size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
+                                                    <input
+                                                        value={newPfImg}
+                                                        onChange={(e) => setNewPfImg(e.target.value)}
+                                                        placeholder="이미지 주소 (URL) 직접 입력"
+                                                        className="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-600 focus:ring-2 focus:ring-blue-500 outline-none"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="w-full h-40 rounded-2xl overflow-hidden relative group">
+                                            <img src={newPfImg} alt="Preview" className="w-full h-full object-cover" />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <button onClick={() => setNewPfImg('')} className="bg-white text-red-500 px-4 py-2 rounded-full text-xs font-bold shadow-lg hover:bg-red-50">
+                                                    이미지 제거
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">프로젝트 제목</label>
+                                    <input
+                                        value={newPfTitle}
+                                        onChange={(e) => setNewPfTitle(e.target.value)}
+                                        className="w-full border border-stone-200 bg-stone-50/50 rounded-2xl p-4 text-sm text-stone-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all focus:bg-white font-medium"
+                                        placeholder="예: 핀테크 앱 리디자인"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">설명</label>
+                                    <textarea
+                                        value={newPfDesc}
+                                        onChange={(e) => setNewPfDesc(e.target.value)}
+                                        className="w-full border border-stone-200 bg-stone-50/50 rounded-2xl p-4 text-sm text-stone-900 h-24 resize-none focus:ring-2 focus:ring-blue-500 outline-none transition-all focus:bg-white font-medium"
+                                        placeholder="프로젝트에 대해 설명해주세요..."
+                                    />
+                                    {/* AI ASSISTANT INTEGRATION */}
+                                    <AIAssistant
+                                        contextTitle={newPfTitle}
+                                        onAccept={(text) => setNewPfDesc(text)}
+                                    />
+                                </div>
                                 <button
-                                    onClick={handleSaveProject}
-                                    className="flex-1 bg-stone-900 text-white py-4 rounded-xl text-sm font-bold hover:bg-stone-800 transition-all shadow-lg shadow-stone-900/10 active:scale-95"
+                                    onClick={handleSavePortfolio}
+                                    disabled={!newPfImg || !newPfTitle}
+                                    className="w-full bg-stone-900 text-white py-4 rounded-xl text-sm font-bold mt-2 hover:bg-stone-800 transition-all shadow-lg shadow-stone-900/10 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     저장하기
                                 </button>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {/* 2. Add Portfolio Modal */}
-            {showAddPortfolio && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-md transition-opacity" onClick={() => setShowAddPortfolio(false)}></div>
-                    <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-md relative z-10 p-8 animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-300">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="font-extrabold text-2xl text-stone-900">포트폴리오 추가</h3>
-                            <button onClick={() => setShowAddPortfolio(false)} className="p-2 bg-stone-50 rounded-full text-stone-400 hover:bg-stone-100 hover:text-stone-900"><X size={20} /></button>
-                        </div>
-                        <div className="space-y-5">
-                            {/* Image Upload Area */}
-                            <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">커버 이미지</label>
-                                {!newPfImg ? (
-                                    <div
-                                        onClick={handleImageUpload}
-                                        className="w-full h-40 border-2 border-dashed border-stone-200 rounded-2xl bg-stone-50 hover:bg-blue-50 hover:border-blue-200 transition-colors cursor-pointer flex flex-col items-center justify-center gap-3 relative overflow-hidden group"
-                                    >
-                                        {isUploading ? (
-                                            <div className="w-48 text-center">
-                                                <div className="text-xs font-bold text-blue-600 mb-2">업로드 중... {uploadProgress}%</div>
-                                                <div className="w-full h-1.5 bg-blue-100 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-blue-600 transition-all duration-100" style={{ width: `${uploadProgress}%` }}></div>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <div className="p-3 bg-white rounded-full shadow-sm text-stone-400 group-hover:text-blue-500 transition-colors">
-                                                    <Upload size={24} />
-                                                </div>
-                                                <div className="text-center">
-                                                    <p className="text-sm font-bold text-stone-600 group-hover:text-blue-700">이미지 업로드</p>
-                                                    <p className="text-xs text-stone-400 mt-1">또는 드래그 앤 드롭</p>
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="w-full h-40 rounded-2xl overflow-hidden relative group">
-                                        <img src={newPfImg} alt="Preview" className="w-full h-full object-cover" />
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            <button onClick={handleRemoveImage} className="bg-white text-red-500 px-4 py-2 rounded-full text-xs font-bold shadow-lg hover:bg-red-50">
-                                                이미지 제거
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">프로젝트 제목</label>
-                                <input
-                                    value={newPfTitle}
-                                    onChange={(e) => setNewPfTitle(e.target.value)}
-                                    className="w-full border border-stone-200 bg-stone-50/50 rounded-2xl p-4 text-sm text-stone-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all focus:bg-white font-medium"
-                                    placeholder="예: 핀테크 앱 리디자인"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-stone-500 uppercase mb-2 ml-1">설명</label>
-                                <textarea
-                                    value={newPfDesc}
-                                    onChange={(e) => setNewPfDesc(e.target.value)}
-                                    className="w-full border border-stone-200 bg-stone-50/50 rounded-2xl p-4 text-sm text-stone-900 h-24 resize-none focus:ring-2 focus:ring-blue-500 outline-none transition-all focus:bg-white font-medium"
-                                    placeholder="프로젝트에 대해 설명해주세요..."
-                                />
-                                {/* AI ASSISTANT INTEGRATION */}
-                                <AIAssistant
-                                    contextTitle={newPfTitle}
-                                    onAccept={(text) => setNewPfDesc(text)}
-                                />
-                            </div>
-                            <button
-                                onClick={handleSavePortfolio}
-                                disabled={!newPfImg || !newPfTitle}
-                                className="w-full bg-stone-900 text-white py-4 rounded-xl text-sm font-bold mt-2 hover:bg-stone-800 transition-all shadow-lg shadow-stone-900/10 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                저장하기
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-        </div>
+        </div >
     );
 };
