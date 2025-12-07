@@ -7,8 +7,13 @@ import { Calendar, Download, ArrowRight, X, Send, CheckCircle2, Loader2, Clock, 
 import { Helmet } from 'react-helmet-async';
 import pageService, { PublicPageData } from '../services/pageService';
 
+import { useToast } from '../context/ToastContext';
+
+// ...
+
 export const PublicPage: React.FC = () => {
     const { username } = useParams<{ username: string }>();
+    const { success, error: showError } = useToast();
     const [data, setData] = useState<PublicPageData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -40,13 +45,13 @@ export const PublicPage: React.FC = () => {
 
     const handleSendInquiry = async () => {
         if (!username || !inquiryEmail || !inquiryContent) {
-            alert('이메일과 내용을 모두 입력해주세요.');
+            showError('이메일과 내용을 모두 입력해주세요.');
             return;
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(inquiryEmail)) {
-            alert('유효한 이메일 주소를 입력해주세요.');
+            showError('유효한 이메일 주소를 입력해주세요.');
             return;
         }
 
@@ -57,8 +62,11 @@ export const PublicPage: React.FC = () => {
                 content: inquiryContent
             });
             setInquiryStatus('success');
+            // success('문의가 성공적으로 전송되었습니다!'); // Optional: The UI already shows a success modal, maybe skip toast or keep it? 
+            // The success modal is nice, let's keep it. But a toast is also good confirmation.
+            success('문의가 전달되었습니다.');
         } catch (err) {
-            alert('문의 전송에 실패했습니다.');
+            showError('문의 전송에 실패했습니다.');
             setInquiryStatus('idle');
         }
     };

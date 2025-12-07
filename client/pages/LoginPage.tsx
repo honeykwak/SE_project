@@ -77,8 +77,11 @@ const MotionBackground = () => (
   </div>
 );
 
+import { useToast } from '../context/ToastContext';
+
 export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const navigate = useNavigate();
+  const { error: toastError, success: toastSuccess } = useToast(); // Renamed to avoid loop
 
   // Toggle State
   const [isLogin, setIsLogin] = useState(true);
@@ -111,18 +114,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         // LOGIN MODE
         const data = await authService.login({ email, password });
         onLogin(data);
+        toastSuccess('환영합니다!');
         navigate('/dashboard');
       } else {
         // SIGNUP MODE
         if (password !== confirmPassword) {
-          alert('비밀번호가 일치하지 않습니다.');
+          toastError('비밀번호가 일치하지 않습니다.');
           setIsLoading(false);
           return;
         }
 
         // Simple validation
         if (!name || !email || !password || !username) {
-          alert('모든 필드를 입력해주세요.');
+          toastError('모든 필드를 입력해주세요.');
           setIsLoading(false);
           return;
         }
@@ -134,10 +138,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           username // Use explicit username
         });
         onLogin(data);
+        toastSuccess('회원가입이 완료되었습니다.');
         navigate('/dashboard');
       }
     } catch (error) {
-      alert(isLogin ? '로그인 실패: 정보를 확인해주세요.' : '회원가입 실패: 다시 시도해주세요.');
+      toastError(isLogin ? '로그인 실패: 정보를 확인해주세요.' : '회원가입 실패: 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
     }

@@ -6,6 +6,7 @@ import { AIAssistant } from '../components/AIAssistant';
 import { generateReplyDraft } from '../services/geminiService';
 import dataService from '../services/dataService';
 import authService from '../services/authService';
+import { useToast } from '../context/ToastContext';
 import {
     LayoutDashboard,
     Calendar as CalendarIcon,
@@ -41,13 +42,7 @@ interface DashboardProps {
     onUpdateUser: (u: UserProfile) => void;
 }
 
-// Toast Component Types
-type ToastType = 'success' | 'error' | 'info';
-interface ToastMessage {
-    id: number;
-    message: string;
-    type: ToastType;
-}
+
 
 export const Dashboard: React.FC<DashboardProps> = ({
     user,
@@ -136,7 +131,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const [isGeneratingReply, setIsGeneratingReply] = useState(false);
 
     // -- Toast State --
-    const [toast, setToast] = useState<ToastMessage | null>(null);
+    const { success, error, info } = useToast();
+
+    // Alias for compatibility during refactor
+    const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+        if (type === 'error') error(message);
+        else if (type === 'info') info(message);
+        else success(message);
+    };
 
     // Trigger animation on tab change
     useEffect(() => {
@@ -216,10 +218,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         }
     };
 
-    const showToast = (message: string, type: ToastType = 'success') => {
-        setToast({ id: Date.now(), message, type });
-        setTimeout(() => setToast(null), 3000);
-    };
+
 
     const openNewProjectModal = (startDate?: string, endDate?: string) => {
         setEditingProject(null);
@@ -315,7 +314,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
             setNewPfTitle('');
             setNewPfDesc('');
             setNewPfImg('');
-            setUploadProgress(0);
             showToast('포트폴리오가 추가되었습니다');
         } catch (error) {
             showToast('저장 실패', 'error');
@@ -405,17 +403,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return (
         <div className="flex h-screen bg-stone-50 font-sans overflow-hidden selection:bg-blue-100 selection:text-blue-900 relative">
 
-            {/* GLOBAL TOAST NOTIFICATION */}
-            {toast && (
-                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] transition-all duration-500 transform translate-y-0 opacity-100">
-                    <div className="bg-stone-900 text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-3">
-                        {toast.type === 'success' && <CheckCircle2 size={18} className="text-green-400" />}
-                        {toast.type === 'error' && <AlertCircle size={18} className="text-red-400" />}
-                        {toast.type === 'info' && <Bell size={18} className="text-blue-400" />}
-                        <span className="text-sm font-bold tracking-wide">{toast.message}</span>
-                    </div>
-                </div>
-            )}
+            {/* GLOBAL TOAST IS HANDLED BY PROVIDER NOW */}
 
             {/* Mobile Sidebar Overlay */}
             {mobileMenuOpen && (
