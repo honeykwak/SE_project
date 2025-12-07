@@ -1,5 +1,5 @@
 import api from './api';
-import { UserProfile, Project, PortfolioItem } from '../../types';
+import { UserProfile, Project, PortfolioItem } from '../types';
 
 export interface PublicPageData {
     user: UserProfile;
