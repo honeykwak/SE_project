@@ -216,7 +216,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
         {/* Copyright */}
         <div className="text-center md:text-left mt-8 text-xs text-stone-400 font-medium pl-1">
-          © 2024 SyncUp. All rights reserved.
+          © 2025 SyncUp. All rights reserved.
         </div>
       </div>
 
