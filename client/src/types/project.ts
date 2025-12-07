@@ -1,22 +1,21 @@
+
 export interface Project {
-  _id: string;
-  user: string;
+  id: string;
   title: string;
-  startDate: string; // ISO Date string
-  endDate: string; // ISO Date string
-  status: 'planning' | 'active' | 'completed';
+  client: string;
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  status: 'planning' | 'in-progress' | 'completed';
   description?: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreateProjectData {
   title: string;
-  startDate: string; // YYYY-MM-DD
-  endDate: string; // YYYY-MM-DD
-  status?: 'planning' | 'active' | 'completed';
+  startDate: string;
+  endDate: string;
+  status?: 'planning' | 'in-progress' | 'completed';
   description?: string;
+  client?: string;
 }
 
-export interface UpdateProjectData extends Partial<CreateProjectData> {}
-
+export interface UpdateProjectData extends Partial<CreateProjectData> { }

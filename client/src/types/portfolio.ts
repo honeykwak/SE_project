@@ -1,20 +1,19 @@
+
 export interface PortfolioItem {
-  _id: string;
-  user: string;
+  id: string;
   title: string;
-  description?: string;
-  imageUrl?: string;
+  category: string;
+  description: string;
+  imageUrl: string;
   projectLink?: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreatePortfolioData {
   title: string;
+  category: string;
   description?: string;
   imageUrl?: string;
   projectLink?: string;
 }
 
-export interface UpdatePortfolioData extends Partial<CreatePortfolioData> {}
-
+export interface UpdatePortfolioData extends Partial<CreatePortfolioData> { }
