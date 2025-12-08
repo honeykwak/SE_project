@@ -1,5 +1,5 @@
 import api from './api';
-import { Project, PortfolioItem } from '../../types';
+import { Project, PortfolioItem } from '../types';
 
 const dataService = {
     // --- Projects ---
@@ -42,7 +42,16 @@ const dataService = {
     // --- Inquiries ---
     getInquiries: async () => {
         const response = await api.get('/inquiries');
-        return response.data;
+        // Map backend schema (senderName, etc.) to frontend Message type (fromName, etc.)
+        return response.data.map((item: any) => ({
+            id: item._id,
+            fromName: item.senderName,
+            fromEmail: item.senderEmail,
+            subject: '새로운 프로젝트 문의', // Backend doesn't have subject, providing default
+            content: item.message,
+            date: new Date(item.createdAt).toISOString().split('T')[0],
+            read: item.isRead
+        }));
     },
 
     markAsRead: async (id: string) => {

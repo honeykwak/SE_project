@@ -65,7 +65,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 ]);
                 setProjects(projData.map((p: any) => ({ ...p, id: p._id || p.id })));
                 setPortfolio(portData.map((p: any) => ({ ...p, id: p._id || p.id })));
-                setMessages(msgData.map((m: any) => ({ ...m, id: m._id || m.id })));
+                // Inquiries are now mapped in dataService
+                setMessages(msgData);
             } catch (error) {
                 console.error("Failed to load dashboard data", error);
                 showToast('데이터를 불러오는데 실패했습니다', 'error');
@@ -74,6 +75,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
             }
         };
         fetchData();
+
+        // Real-time Polling for Inquiries (every 15 seconds)
+        const intervalId = setInterval(async () => {
+            try {
+                const newMessages = await dataService.getInquiries();
+                setMessages(prev => {
+                    // Only update if length changed or unread count changed to avoid flickering
+                    // Simple check: compare JSON string or just update
+                    // For now, always update to ensure read status sync
+                    return newMessages;
+                });
+            } catch (error) {
+                console.error("Polling failed");
+            }
+        }, 15000);
+
+        return () => clearInterval(intervalId);
     }, []);
     const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'portfolio' | 'inbox'>('overview');
     // Animation State
