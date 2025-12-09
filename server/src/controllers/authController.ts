@@ -196,19 +196,53 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
 export const googleLogin = async (req: Request, res: Response): Promise<void> => {
   try {
     const { token } = req.body;
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
 
-    const payload = ticket.getPayload();
+    let payload;
+    let googleId;
+    let email;
+    let name;
+    let picture;
 
+    // 1. Try to verify as ID Token (for GoogleLogin component or mobile apps)
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const idTokenPayload = ticket.getPayload();
+      if (idTokenPayload) {
+        payload = idTokenPayload;
+        googleId = payload.sub;
+        email = payload.email;
+        name = payload.name;
+        picture = payload.picture;
+      }
+    } catch (error) {
+      // Ignore ID Token error and try Access Token
+    }
+
+    // 2. If no payload yet, try to fetch User Info as Access Token (for useGoogleLogin hook)
     if (!payload) {
+      const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json() as any;
+        payload = data;
+        googleId = data.sub;
+        email = data.email;
+        name = data.name;
+        picture = data.picture;
+      }
+    }
+
+    if (!payload || !email || !googleId) {
       res.status(400).json({ message: 'Invalid Google Token' });
       return;
     }
 
-    const { email, name, sub: googleId, picture } = payload;
+    // const { email, name, sub: googleId, picture } = payload; // Already extracted above
 
     // Check if user exists
     let user = await User.findOne({ $or: [{ email }, { googleId }] });

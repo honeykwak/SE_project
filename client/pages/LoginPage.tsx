@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import authService from '../services/authService';
 import { UserProfile } from '../types';
-import { GoogleLogin } from '@react-oauth/google'; // Added
+import { useGoogleLogin } from '@react-oauth/google'; // Changed to useGoogleLogin
 
 interface LoginPageProps {
   onLogin: (user: UserProfile) => void;
@@ -51,27 +51,31 @@ const DeepRipple = () => (
   </RippleContainer>
 );
 
-const MotionBackground = () => (
+const MotionBackground: React.FC<{ showAnimation: boolean }> = ({ showAnimation }) => (
   <div className="absolute inset-0 overflow-hidden bg-stone-50 pointer-events-none z-0">
     <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-blue-50/50 to-stone-50"></div>
 
-    {/* Floating Abstract Card */}
-    <div className="absolute top-[20%] right-[10%] w-72 h-48 bg-white rounded-2xl shadow-xl border border-blue-100 opacity-80 transform rotate-[-6deg] animate-[bounce_6s_infinite] hidden md:block z-10">
-      <div className="p-6 space-y-4">
-        <div className="h-3 w-1/3 bg-stone-200 rounded"></div>
-        <div className="h-3 w-full bg-stone-100 rounded"></div>
-        <div className="h-3 w-2/3 bg-stone-100 rounded"></div>
+    {/* Floating Abstract Card - Only animate if enabled */}
+    {showAnimation && (
+      <div className="absolute top-[20%] right-[10%] w-72 h-48 bg-white rounded-2xl shadow-xl border border-blue-100 opacity-80 transform rotate-[-6deg] animate-[bounce_6s_infinite] hidden md:block z-10">
+        <div className="p-6 space-y-4">
+          <div className="h-3 w-1/3 bg-stone-200 rounded"></div>
+          <div className="h-3 w-full bg-stone-100 rounded"></div>
+          <div className="h-3 w-2/3 bg-stone-100 rounded"></div>
+        </div>
       </div>
-    </div>
+    )}
 
     {/* Anchor Container */}
     <div className="absolute bottom-[25%] right-[20%] w-64 h-72 hidden md:flex items-center justify-center z-20">
-      {/* Ripple */}
-      <div className="absolute inset-0 flex items-center justify-center z-0">
-        <DeepRipple />
-      </div>
-      {/* Card */}
-      <div className="relative w-full h-full bg-blue-600 rounded-2xl shadow-2xl shadow-blue-900/20 transform flex items-center justify-center z-20 animate-[impact-bounce_4s_infinite]">
+      {/* Ripple - Only if enabled */}
+      {showAnimation && (
+        <div className="absolute inset-0 flex items-center justify-center z-0">
+          <DeepRipple />
+        </div>
+      )}
+      {/* Card - Always show but animate only if enabled */}
+      <div className={`relative w-full h-full bg-blue-600 rounded-2xl shadow-2xl shadow-blue-900/20 transform flex items-center justify-center z-20 ${showAnimation ? 'animate-[impact-bounce_4s_infinite]' : 'rotate-[12deg] translate-y-[60px]'}`}>
         <div className="text-white text-6xl font-bold opacity-20 select-none">Sync.</div>
       </div>
     </div>
@@ -93,6 +97,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [name, setName] = useState(''); // Only for signup
   const [username, setUsername] = useState(''); // Only for signup
   const [confirmPassword, setConfirmPassword] = useState(''); // Only for signup
+
+  // Animation State
+  const [showAnimation, setShowAnimation] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -149,22 +156,61 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
-    try {
-      const { credential } = credentialResponse;
-      const data = await authService.googleLogin(credential);
-      onLogin(data);
-      toastSuccess('구글 로그인 성공!');
-      navigate('/dashboard');
-    } catch (error) {
-      toastError('구글 로그인 실패');
-    }
-  };
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        // useGoogleLogin returns access_token, but our backend expects id_token if we use verifyIdToken...
+        // Wait, useGoogleLogin by default returns access_token (implicit flow) or code (auth code flow) based on config
+        // If we want id_token (credential), we usually use the GoogleLogin component or configure flow: 'implicit' but getting id_token manually is harder with hooks often.
+        // ACTUALLY: GoogleLogin component returns 'credential' (ID Token). useGoogleLogin returns 'access_token'.
+        // To verify on backend with current implementation, we need ID Token.
+        // However, useGoogleLogin helps us get access_token to fetch user info OR we can use 'onSuccess' to get code?
+        // Let's check documentation or common usage.
+        // Easier path: Modify backend to accept access_token and fetch user info from Google? OR use standard Google Login Component which gives ID Token.
+        // User asked for "Custom Design".
+        // If using useGoogleLogin, we might need to change backend to use access_token to get user info.
+        // OR we can keep backend as is and try to get ID token?
+        // Actually, many people use access_token to get user info using google apis.
+        // Let's assume we will switch backend verification to use access_token OR just fetch profile here and send to backend? NO, unsafe.
+        // Let's standard approach: send access_token to backend, backend calls https://www.googleapis.com/oauth2/v3/userinfo
+
+        // Wait! The user asked for "Custom Button". Creating a custom button with `useGoogleLogin` is standard.
+        // But our backend endpoint `googleLogin` uses `client.verifyIdToken`. This expects an ID Token.
+        // `useGoogleLogin` with `flow: 'implicit'` returns access_token.
+        // `useGoogleLogin` does NOT easily return ID Token.
+        // PLAN ADJUSTMENT: We will update Backend `googleLogin` to support `access_token` verification as well OR we change frontend to request ID Token?
+        // Actually, fetching user info on frontend and sending to backend is NOT secure for logging in (anyone can fake it).
+        // Best Way: Send `access_token` to backend. Backend calls Google UserInfo API.
+        // Let's modify backend `authController` first? Or try to keep it simple.
+
+        // Let's stick to updating Frontend first. I will assume I can update backend to verify access_token.
+
+        const userInfo = await authService.googleLogin(tokenResponse.access_token); // We will send access_token
+        onLogin(userInfo);
+        toastSuccess('구글 로그인 성공!');
+        navigate('/dashboard');
+      } catch (error) {
+        toastError('구글 로그인 실패');
+      }
+    },
+    onError: () => toastError('구글 로그인 실패'),
+  });
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center md:justify-start relative font-sans text-stone-900 overflow-hidden p-6 md:p-0">
 
-      <MotionBackground />
+      {/* Animation Toggle */}
+      <div className="absolute top-6 right-6 z-50 flex items-center gap-2 bg-white/80 backdrop-blur-md px-4 py-2 rounded-full shadow-sm border border-stone-200">
+        <span className="text-xs font-bold text-stone-600">Animation</span>
+        <button
+          onClick={() => setShowAnimation(!showAnimation)}
+          className={`w-10 h-6 rounded-full p-1 transition-colors duration-300 ${showAnimation ? 'bg-blue-600' : 'bg-stone-300'}`}
+        >
+          <div className={`w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform duration-300 ${showAnimation ? 'translate-x-4' : 'translate-x-0'}`} />
+        </button>
+      </div>
+
+      <MotionBackground showAnimation={showAnimation} />
 
       <div className="relative z-30 w-full max-w-[400px] md:ml-16 lg:ml-28 flex flex-col justify-center animate-in fade-in slide-in-from-left-8 duration-700">
 
@@ -296,11 +342,19 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
               </div>
 
               <div className="flex justify-center">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={() => toastError('구글 로그인 실패')}
-                  useOneTap
-                />
+                <button
+                  type="button"
+                  onClick={() => googleLogin()}
+                  className="w-full bg-white text-stone-600 border border-stone-200 font-bold py-3.5 rounded-xl hover:bg-stone-50 transition-colors text-sm flex items-center justify-center gap-2 group shadow-sm hover:shadow-md"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.26.81-.58z" fill="#FBBC05" />
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                  </svg>
+                  Google 계정으로 계속하기
+                </button>
               </div>
             </>
           )}
