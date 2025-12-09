@@ -3,7 +3,8 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IUser extends Document {
   email: string;
   username: string;
-  password: string;
+  password?: string;
+  googleId?: string; // Added
   name: string;
   role: string;      // Changed from jobTitle
   bio: string;       // Changed from introduction
@@ -34,7 +35,12 @@ const UserSchema: Schema = new Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: false, // Changed for Google Login
+    },
+    googleId: { // Added
+      type: String,
+      sparse: true,
+      unique: true,
     },
     name: {
       type: String,

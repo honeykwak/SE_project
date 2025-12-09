@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google'; // Added
 import { PublicPage } from './pages/PublicPage';
 import { Dashboard } from './pages/Dashboard';
 import { LoginPage } from './pages/LoginPage';
@@ -35,35 +36,37 @@ const App: React.FC = () => {
   }
 
   return (
-    <ToastProvider>
-      <HashRouter>
-        <Routes>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
+      <ToastProvider>
+        <HashRouter>
+          <Routes>
 
-          <Route path="/login" element={<LoginPage onLogin={(u) => setUser(u)} />} />
-          <Route path="/info" element={<InfoPage />} />
+            <Route path="/login" element={<LoginPage onLogin={(u) => setUser(u)} />} />
+            <Route path="/info" element={<InfoPage />} />
 
 
 
-          {/* Public facing page (what clients see) - Uses URL param for username */}
-          <Route path="/:username" element={<PublicPage />} />
+            {/* Public facing page (what clients see) - Uses URL param for username */}
+            <Route path="/:username" element={<PublicPage />} />
 
-          {/* Private Dashboard (what freelancer sees) */}
-          <Route path="/dashboard" element={
-            user ? (
-              <Dashboard
-                user={user}
-                onUpdateUser={handleUpdateUser}
-              />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } />
+            {/* Private Dashboard (what freelancer sees) */}
+            <Route path="/dashboard" element={
+              user ? (
+                <Dashboard
+                  user={user}
+                  onUpdateUser={handleUpdateUser}
+                />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            } />
 
-          {/* Default Redirect */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </HashRouter>
-    </ToastProvider>
+            {/* Default Redirect */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </HashRouter>
+      </ToastProvider>
+    </GoogleOAuthProvider>
   );
 };
 

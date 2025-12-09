@@ -2,6 +2,10 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret_key_dev_only';
 const JWT_EXPIRES_IN = '1d';
@@ -78,6 +82,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     // 2. Check password
+    if (!user.password) {
+      res.status(400).json({ message: 'Invalid credentials' });
+      return;
+    }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       res.status(400).json({ message: 'Invalid credentials' });
@@ -181,3 +189,81 @@ export const updateProfile = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+// @desc    Google Login
+// @route   POST /api/auth/google
+// @access  Public
+export const googleLogin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.body;
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    if (!payload) {
+      res.status(400).json({ message: 'Invalid Google Token' });
+      return;
+    }
+
+    const { email, name, sub: googleId, picture } = payload;
+
+    // Check if user exists
+    let user = await User.findOne({ $or: [{ email }, { googleId }] });
+
+    if (user) {
+      // If user exists but no googleId (legacy email user), link it
+      if (!user.googleId) {
+        user.googleId = googleId;
+        // Optionally update avatar if missing
+        if (!user.avatarUrl && picture) user.avatarUrl = picture;
+        await user.save();
+      }
+    } else {
+      // Create new user
+      // Generate unique username from email handle + random string if needed
+      let username = email?.split('@')[0] || 'user' + Date.now();
+
+      // Ensure username uniqueness
+      let usernameExists = await User.findOne({ username });
+      if (usernameExists) {
+        username += Math.floor(Math.random() * 1000).toString();
+      }
+
+      user = await User.create({
+        email,
+        name,
+        username,
+        googleId,
+        avatarUrl: picture,
+        // No password for Google users
+      });
+    }
+
+    // Generate JWT
+    const jwtToken = jwt.sign({ id: user._id }, JWT_SECRET, {
+      expiresIn: JWT_EXPIRES_IN,
+    });
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      username: user.username,
+      role: user.role,
+      bio: user.bio,
+      tags: user.tags,
+      avatarUrl: user.avatarUrl,
+      location: user.location,
+      availability: user.availability,
+      token: jwtToken,
+    });
+
+  } catch (error) {
+    console.error('Google Login Error:', error);
+    res.status(500).json({ message: 'Google Login Failed' });
+  }
+};
+
