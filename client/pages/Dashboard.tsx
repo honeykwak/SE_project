@@ -374,12 +374,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
 
     const handleSendReply = async () => {
-        console.log("Attempting to send reply...", { hasText: !!replyText.trim(), hasMessage: !!activeMessage });
-
-        if (!replyText.trim() || !activeMessage) {
-            console.warn("Cannot send: Missing text or active message");
-            return;
-        }
+        if (!replyText.trim() || !activeMessage) return;
 
         const contentToSend = replyText;
         setReplyText(''); // Optimistic UI clear
@@ -387,11 +382,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
         try {
             showToast('답장을 전송 중입니다...', 'info');
             await dataService.replyInquiry(activeMessage.id, contentToSend);
-            showToast('답장이 성공적으로 전송되었습니다', 'success');
+            showToast('메일이 성공적으로 전송되었습니다!', 'success');
         } catch (error) {
             setReplyText(contentToSend); // Restore text on failure
             console.error('Failed to send reply:', error);
-            showToast('답장 전송에 실패했습니다', 'error');
+            showToast('메일 전송에 실패했습니다.', 'error');
         }
     };
 

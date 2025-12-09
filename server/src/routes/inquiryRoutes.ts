@@ -12,5 +12,6 @@ router.get('/inquiries', protect, getInquiries);
 router.put('/inquiries/:id/read', protect, markAsRead);
 router.post('/inquiries/:id/reply', protect, replyInquiry);
 
-export default router;
+router.post('/inquiries/:id/reply', protect, replyInquiry);
 
+export default router;
