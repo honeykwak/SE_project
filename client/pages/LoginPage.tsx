@@ -56,15 +56,14 @@ const MotionBackground: React.FC<{ showAnimation: boolean }> = ({ showAnimation 
     <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-blue-50/50 to-stone-50"></div>
 
     {/* Floating Abstract Card - Only animate if enabled */}
-    {showAnimation && (
-      <div className="absolute top-[20%] right-[10%] w-72 h-48 bg-white rounded-2xl shadow-xl border border-blue-100 opacity-80 transform rotate-[-6deg] animate-[bounce_6s_infinite] hidden md:block z-10">
-        <div className="p-6 space-y-4">
-          <div className="h-3 w-1/3 bg-stone-200 rounded"></div>
-          <div className="h-3 w-full bg-stone-100 rounded"></div>
-          <div className="h-3 w-2/3 bg-stone-100 rounded"></div>
-        </div>
+    {/* Floating Abstract Card - Always animate */}
+    <div className="absolute top-[20%] right-[10%] w-72 h-48 bg-white rounded-2xl shadow-xl border border-blue-100 opacity-80 transform rotate-[-6deg] animate-[bounce_6s_infinite] hidden md:block z-10">
+      <div className="p-6 space-y-4">
+        <div className="h-3 w-1/3 bg-stone-200 rounded"></div>
+        <div className="h-3 w-full bg-stone-100 rounded"></div>
+        <div className="h-3 w-2/3 bg-stone-100 rounded"></div>
       </div>
-    )}
+    </div>
 
     {/* Anchor Container */}
     <div className="absolute bottom-[25%] right-[20%] w-64 h-72 hidden md:flex items-center justify-center z-20">
@@ -75,7 +74,8 @@ const MotionBackground: React.FC<{ showAnimation: boolean }> = ({ showAnimation 
         </div>
       )}
       {/* Card - Always show but animate only if enabled */}
-      <div className={`relative w-full h-full bg-blue-600 rounded-2xl shadow-2xl shadow-blue-900/20 transform flex items-center justify-center z-20 ${showAnimation ? 'animate-[impact-bounce_4s_infinite]' : 'rotate-[12deg] translate-y-[60px]'}`}>
+      {/* Card - Always animate */}
+      <div className="relative w-full h-full bg-blue-600 rounded-2xl shadow-2xl shadow-blue-900/20 transform flex items-center justify-center z-20 animate-[impact-bounce_4s_infinite]">
         <div className="text-white text-6xl font-bold opacity-20 select-none">Sync.</div>
       </div>
     </div>

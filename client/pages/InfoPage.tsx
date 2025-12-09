@@ -22,8 +22,14 @@ export const InfoPage: React.FC = () => {
                             onClick={() => navigate('/')}
                             className="flex items-center gap-2 group"
                         >
-                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center transform group-hover:rotate-3 transition-transform">
-                                <span className="text-white font-bold text-lg">S</span>
+                            <div className="w-8 h-8 bg-blue-600 rounded-md flex items-center justify-center transform group-hover:rotate-0 rotate-[-3deg] transition-transform duration-300">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                    <path d="M3 3v5h5" />
+                                    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                                    <path d="M16 16l5 5" />
+                                    <path d="M21 21v-5h-5" />
+                                </svg>
                             </div>
                             <span className="text-xl font-bold text-stone-900 tracking-tight">SyncUp</span>
                         </button>
@@ -194,7 +200,13 @@ export const InfoPage: React.FC = () => {
             <footer className="bg-white border-t border-stone-200 py-12 px-4 text-center">
                 <div className="flex items-center justify-center gap-2 mb-8 opacity-80">
                     <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
-                        <span className="text-white font-bold text-xs">S</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                            <path d="M3 3v5h5" />
+                            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                            <path d="M16 16l5 5" />
+                            <path d="M21 21v-5h-5" />
+                        </svg>
                     </div>
                     <span className="font-bold text-stone-900">SyncUp</span>
                 </div>
