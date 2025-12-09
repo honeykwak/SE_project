@@ -374,7 +374,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
 
     const handleSendReply = async () => {
-        if (!replyText.trim() || !activeMessage) return;
+        console.log("Attempting to send reply...", { hasText: !!replyText.trim(), hasMessage: !!activeMessage });
+
+        if (!replyText.trim() || !activeMessage) {
+            console.warn("Cannot send: Missing text or active message");
+            return;
+        }
 
         const contentToSend = replyText;
         setReplyText(''); // Optimistic UI clear

@@ -1,11 +1,14 @@
 import nodemailer from 'nodemailer';
 
 // Nodemailer Transporter init
+// Use explicit 587 port for Render/Cloud compatibility (Port 25/465 can be blocked or flaky)
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // Or use 'host' and 'port' for generic SMTP
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // true for 465, false for other ports
     auth: {
-        user: process.env.SMTP_EMAIL, // Your Email
-        pass: process.env.SMTP_PASSWORD, // Your App Password
+        user: process.env.SMTP_EMAIL,
+        pass: process.env.SMTP_PASSWORD,
     },
 });
 
