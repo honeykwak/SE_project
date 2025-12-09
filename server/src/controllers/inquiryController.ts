@@ -94,9 +94,9 @@ export const replyInquiry = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
-      console.error("CRITICAL: Missing SMTP Environment Variables");
-      throw new Error("Server SMTP configuration is missing");
+    if (!process.env.RESEND_API_KEY) {
+      console.error("CRITICAL: Missing Resend API Key");
+      throw new Error("Server Email configuration is missing");
     }
 
     const emailSubject = `Re: [SyncUp] ${inquiry.senderName}님의 문의에 대한 답변입니다.`;
@@ -121,7 +121,7 @@ export const replyInquiry = async (req: Request, res: Response): Promise<void> =
     console.error("Reply Error Details:", {
       message: error.message,
       stack: error.stack,
-      smtpUser: process.env.SMTP_EMAIL ? 'Set' : 'Missing'
+      resendKey: process.env.RESEND_API_KEY ? 'Set' : 'Missing'
     });
     res.status(500).json({ message: error.message || 'Failed to send email' });
   }
