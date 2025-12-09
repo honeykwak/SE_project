@@ -4,6 +4,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { PublicPage } from './pages/PublicPage';
 import { Dashboard } from './pages/Dashboard';
 import { LoginPage } from './pages/LoginPage';
+import { InfoPage } from './pages/InfoPage';
 
 import { UserProfile } from './types';
 import authService from './services/authService';
@@ -37,7 +38,10 @@ const App: React.FC = () => {
     <ToastProvider>
       <HashRouter>
         <Routes>
+
           <Route path="/login" element={<LoginPage onLogin={(u) => setUser(u)} />} />
+          <Route path="/info" element={<InfoPage />} />
+
 
 
           {/* Public facing page (what clients see) - Uses URL param for username */}
