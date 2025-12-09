@@ -43,8 +43,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Explicitly handle preflight for all routes
-app.options('*', cors());
+
 
 // Helmet Config (Allow Cross-Origin Resource Sharing)
 app.use(helmet({
