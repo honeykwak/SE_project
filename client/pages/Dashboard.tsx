@@ -127,13 +127,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const [projTitle, setProjTitle] = useState('');
     const [projStart, setProjStart] = useState('');
     const [projEnd, setProjEnd] = useState('');
-    const [projStatus, setProjStatus] = useState<'planning' | 'in-progress' | 'completed'>('planning');
+    const [projStatus, setProjStatus] = useState<'planning' | 'active' | 'completed'>('planning');
 
     // QR Loading State
     const [isQrLoading, setIsQrLoading] = useState(true);
 
     // -- Project Filter State --
-    const [filterStatus, setFilterStatus] = useState<'all' | 'planning' | 'in-progress' | 'completed'>('all');
+    const [filterStatus, setFilterStatus] = useState<'all' | 'planning' | 'active' | 'completed'>('all');
 
     // -- Portfolio State --
     const [showAddPortfolio, setShowAddPortfolio] = useState(false);
@@ -282,7 +282,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     endDate: projEnd,
                     status: projStatus
                 });
-                setProjects(projects.map(p => p.id === updated.id ? updated : p));
+                const mappedUpdated = { ...updated, id: updated._id || updated.id };
+                setProjects(projects.map(p => p.id === mappedUpdated.id ? mappedUpdated : p));
                 showToast('프로젝트가 수정되었습니다');
             } else {
                 // Create
@@ -295,7 +296,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     status: projStatus,
                     description: ''
                 });
-                setProjects([...projects, newProj]);
+                const mappedProj = { ...newProj, id: newProj._id || newProj.id };
+                setProjects([...projects, mappedProj]);
                 showToast('새 프로젝트가 생성되었습니다');
             }
             setShowProjectModal(false);
@@ -326,7 +328,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 imageUrl: newPfImg || 'https://picsum.photos/400/300',
                 category: 'Design'
             });
-            setPortfolio([...portfolio, newItem]);
+            const mappedItem = { ...newItem, id: newItem._id || newItem.id };
+            setPortfolio([...portfolio, mappedItem]);
 
             setShowAddPortfolio(false);
             setNewPfTitle('');
@@ -1098,11 +1101,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                     <div className="relative">
                                         <select
                                             value={projStatus}
-                                            onChange={(e: any) => setProjStatus(e.target.value)}
+                                            onChange={(e) => setProjStatus(e.target.value as any)}
                                             className="w-full border border-stone-200 bg-stone-50/50 rounded-2xl p-4 text-sm text-stone-900 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none font-medium"
                                         >
                                             <option value="planning">계획 중</option>
-                                            <option value="in-progress">진행 중</option>
+                                            <option value="active">진행 중</option>
                                             <option value="completed">완료됨</option>
                                         </select>
                                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-stone-400">
