@@ -59,6 +59,11 @@ const dataService = {
         return response.data;
     },
 
+    replyInquiry: async (id: string, message: string) => {
+        const response = await api.post(`/inquiries/${id}/reply`, { message });
+        return response.data;
+    },
+
     // Public facing inquiry
     sendInquiry: async (username: string, data: any) => {
         const response = await api.post(`/inquiry/${username}`, data);

@@ -373,10 +373,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
         showToast('AI 답장 초안이 생성되었습니다', 'success');
     };
 
-    const handleSendReply = () => {
-        if (!replyText.trim()) return;
-        setReplyText('');
-        showToast('답장이 전송되었습니다');
+    const handleSendReply = async () => {
+        if (!replyText.trim() || !activeMessage) return;
+
+        const contentToSend = replyText;
+        setReplyText(''); // Optimistic UI clear
+
+        try {
+            showToast('답장을 전송 중입니다...', 'info');
+            await dataService.replyInquiry(activeMessage.id, contentToSend);
+            showToast('답장이 성공적으로 전송되었습니다', 'success');
+        } catch (error) {
+            setReplyText(contentToSend); // Restore text on failure
+            console.error('Failed to send reply:', error);
+            showToast('답장 전송에 실패했습니다', 'error');
+        }
     };
 
     const SidebarItem = ({ id, icon: Icon, label }: any) => (
